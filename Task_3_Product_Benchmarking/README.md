@@ -304,50 +304,7 @@ Yandex Market Personalization — это встроенная система р�
     - Базовые метрики: CTR, конверсия, средний чек.
     - Возможность тестировать разные алгоритмы рекомендаций.
 
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Сравнение конкурентов NextSell</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-            vertical-align: top;
-        }
-        th {
-            background-color: #f2f2f2;
-            position: sticky;
-            top: 0;
-        }
-        tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-        a {
-            color: #0066cc;
-            text-decoration: none;
-        }
-        a:hover {
-            text-decoration: underline;
-        }
-        .highlight {
-            background-color: #fffacd;
-        }
-    </style>
-</head>
 <body>
-    <h1>Сравнение конкурентов NextSell в сфере AI-рекомендательных систем</h1>
     <table>
         <thead>
             <tr>
