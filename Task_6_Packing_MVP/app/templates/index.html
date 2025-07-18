@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Строительство сотовой связи</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Custom styles */
+        .map-container {
+            height: 400px;
+            width: 100%;
+        }
+        .prediction-card {
+            transition: all 0.3s ease;
+        }
+        .prediction-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .input-field:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 1px #3b82f6;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header Block -->
+    <header class="bg-white shadow-sm">
+        <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <!-- Logo -->
+                <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-xl">
+                    <i class="fas fa-tower-cell"></i>
+                </div>
+                <!-- Site Name -->
+                <h1 class="text-2xl font-bold text-gray-800">СтройСвязь</h1>
+            </div>
+            <!-- Navigation Icons -->
+            <nav class="flex items-center space-x-6">
+                <a href="#main" class="text-gray-600 hover:text-blue-600 transition-colors" title="Главная">
+                    <i class="fas fa-home text-xl"></i>
+                </a>
+                <a href="#login" class="text-gray-600 hover:text-blue-600 transition-colors" title="Вход">
+                    <i class="fas fa-sign-in-alt text-xl"></i>
+                </a>
+                <a href="#register" class="text-gray-600 hover:text-blue-600 transition-colors" title="Регистрация">
+                    <i class="fas fa-user-plus text-xl"></i>
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+        <!-- Login Block -->
+        <section id="login" class="bg-white rounded-lg shadow-md p-6 mb-8 border border-gray-200">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Вход в систему</h2>
+            <form class="space-y-4">
+                <div>
+                    <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Имя пользователя</label>
+                    <input type="text" id="username" class="w-full px-3 py-2 border border-gray-300 rounded-md input-field focus:outline-none">
+                </div>
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Пароль</label>
+                    <input type="password" id="password" class="w-full px-3 py-2 border border-gray-300 rounded-md input-field focus:outline-none">
+                </div>
+                <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">
+                    Войти
+                </button>
+            </form>
+        </section>
+
+        <!-- Registration Block -->
+        <section id="register" class="bg-white rounded-lg shadow-md p-6 mb-8 border border-gray-200">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Регистрация</h2>
+            <form class="space-y-4">
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input type="email" id="email" class="w-full px-3 py-2 border border-gray-300 rounded-md input-field focus:outline-none">
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="first-name" class="block text-sm font-medium text-gray-700 mb-1">Имя</label>
+                        <input type="text" id="first-name" class="w-full px-3 py-2 border border-gray-300 rounded-md input-field focus:outline-none">
+                    </div>
+                    <div>
+                        <label for="last-name" class="block text-sm font-medium text-gray-700 mb-1">Фамилия</label>
+                        <input type="text" id="last-name" class="w-full px-3 py-2 border border-gray-300 rounded-md input-field focus:outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label for="reg-password" class="block text-sm font-medium text-gray-700 mb-1">Пароль</label>
+                    <input type="password" id="reg-password" class="w-full px-3 py-2 border border-gray-300 rounded-md input-field focus:outline-none">
+                </div>
+                <div>
+                    <label for="confirm-password" class="block text-sm font-medium text-gray-700 mb-1">Подтвердите пароль</label>
+                    <input type="password" id="confirm-password" class="w-full px-3 py-2 border border-gray-300 rounded-md input-field focus:outline-none">
+                </div>
+                <button type="submit" class="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors">
+                    Зарегистрироваться
+                </button>
+            </form>
+        </section>
+
+        <!-- Main Content Block -->
+        <section id="main" class="bg-white rounded-lg shadow-md p-6 mb-8 border border-gray-200">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Прогнозирование времени строительства объектов связи</h2>
+            
+            <!-- Existing Objects Block -->
+            <div class="mb-8 p-4 border border-gray-200 rounded-lg">
+                <h3 class="text-lg font-semibold text-gray-700 mb-3">Существующие объекты связи</h3>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Название</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Адрес</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Статус</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">БС-1254</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">ул. Ленина, 45</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Активен</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    <button class="text-blue-600 hover:text-blue-900">Выбрать</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">БС-1255</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">ул. Гагарина, 12</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">На реконструкции</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    <button class="text-blue-600 hover:text-blue-900">Выбрать</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">3</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">БС-1256</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">пр. Мира, 78</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Неактивен</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    <button class="text-blue-600 hover:text-blue-900">Выбрать</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Technology Selection Block -->
+            <div class="mb-8 p-4 border border-gray-200 rounded-lg">
+                <h3 class="text-lg font-semibold text-gray-700 mb-3">Выбор технологии</h3>
+                <div class="flex flex-wrap gap-4">
+                    <label class="inline-flex items-center">
+                        <input type="checkbox" class="form-checkbox h-5 w-5 text-blue-600">
+                        <span class="ml-2 text-gray-700">2G</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="checkbox" class="form-checkbox h-5 w-5 text-blue-600">
+                        <span class="ml-2 text-gray-700">3G</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="checkbox" class="form-checkbox h-5 w-5 text-blue-600" checked>
+                        <span class="ml-2 text-gray-700">4G</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="checkbox" class="form-checkbox h-5 w-5 text-blue-600">
+                        <span class="ml-2 text-gray-700">RRL</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Dates Input Block -->
+            <div class="mb-8 p-4 border border-gray-200 rounded-lg">
+                <h3 class="text-lg font-semibold text-gray-700 mb-3">Даты этапов</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="start-date" class="block text-sm font-medium text-gray-700 mb-1">Дата начала проекта</label>
+                        <input type="date" id="start-date" class="w-full px-3 py-2 border border-gray-300 rounded-md input-field focus:outline-none">
+                    </div>
+                    <div>
+                        <label for="spec-date" class="block text-sm font-medium text-gray-700 mb-1">Дата готовности ТЗ</label>
+                        <input type="date" id="spec-date" class="w-full px-3 py-2 border border-gray-300 rounded-md input-field focus:outline-none">
+                    </div>
+                    <div>
+                        <label for="contractor-date" class="block text-sm font-medium text-gray-700 mb-1">Дата принятия подрядчиком</label>
+                        <input type="date" id="contractor-date" class="w-full px-3 py-2 border border-gray-300 rounded-md input-field focus:outline-none">
+                    </div>
+                    <div>
+                        <label for="equipment-date" class="block text-sm font-medium text-gray-700 mb-1">Дата выдачи оборудования</label>
+                        <input type="date" id="equipment-date" class="w-full px-3 py-2 border border-gray-300 rounded-md input-field focus:outline-none">
+                    </div>
+                    <div>
+                        <label for="commissioning-date" class="block text-sm font-medium text-gray-700 mb-1">Дата готовности к ПНР</label>
+                        <input type="date" id="commissioning-date" class="w-full px-3 py-2 border border-gray-300 rounded-md input-field focus:outline-none">
+                    </div>
+                    <div>
+                        <label for="params-date" class="block text-sm font-medium text-gray-700 mb-1">Дата готовности параметров</label>
+                        <input type="date" id="params-date" class="w-full px-3 py-2 border border-gray-300 rounded-md input-field focus:outline-none">
+                    </div>
+                    <div>
+                        <label for="integration-date" class="block text-sm font-medium text-gray-700 mb-1">Дата интеграции объекта</label>
+                        <input type="date" id="integration-date" class="w-full px-3 py-2 border border-gray-300 rounded-md input-field focus:outline-none">
+                    </div>
+                    <div>
+                        <label for="operation-date" class="block text-sm font-medium text-gray-700 mb-1">Дата ввода в эксплуатацию</label>
+                        <input type="date" id="operation-date" class="w-full px-3 py-2 border border-gray-300 rounded-md input-field focus:outline-none">
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <button id="calculate-btn" class="bg-blue-600 text-white py-2 px-6 rounded-md hover:bg-blue-700 transition-colors">
+                        Рассчитать прогноз
+                    </button>
+                </div>
+            </div>
+
+            <!-- Predictions History Block -->
+            <div class="mb-8 p-4 border border-gray-200 rounded-lg">
+                <h3 class="text-lg font-semibold text-gray-700 mb-3">История предсказаний</h3>
+                <div id="predictions-container" class="space-y-4">
+                    <!-- Prediction cards will be added here -->
+                </div>
+                
+                <!-- Pagination -->
+                <div class="mt-6 flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-700">
+                            Показано <span class="font-medium">1</span> из <span class="font-medium">5</span> записей
+                        </p>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                            Назад
+                        </button>
+                        <button class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
+                            1
+                        </button>
+                        <button class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                            2
+                        </button>
+                        <button class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                            3
+                        </button>
+                        <button class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                            Вперед
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Map Block -->
+            <div class="p-4 border border-gray-200 rounded-lg">
+                <h3 class="text-lg font-semibold text-gray-700 mb-3">Карта объектов</h3>
+                <div class="map-container bg-gray-200 rounded-lg mb-4 flex items-center justify-center relative">
+                    <div id="map" class="absolute inset-0">
+                        <!-- Map will be rendered here -->
+                        <div class="flex items-center justify-center h-full">
+                            <div class="text-center">
+                                <i class="fas fa-map-marked-alt text-5xl text-gray-400 mb-2"></i>
+                                <p class="text-gray-500">Карта объектов связи</p>
+                                <button id="get-coords-btn" class="mt-4 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">
+                                    Получить координаты
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="latitude" class="block text-sm font-medium text-gray-700 mb-1">Широта</label>
+                        <input type="text" id="latitude" class="w-full px-3 py-2 border border-gray-300 rounded-md input-field focus:outline-none" readonly>
+                    </div>
+                    <div>
+                        <label for="longitude" class="block text-sm font-medium text-gray-700 mb-1">Долгота</label>
+                        <input type="text" id="longitude" class="w-full px-3 py-2 border border-gray-300 rounded-md input-field focus:outline-none" readonly>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-white border-t border-gray-200 py-6 mt-8">
+        <div class="container mx-auto px-4 text-center text-gray-500 text-sm">
+            <p>© 2023 СтройСвязь. Все права защищены.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Sample data for predictions
+        const samplePredictions = [
+            { id: 1, object: "БС-1254", technology: "4G", completionDate: "2023-12-15", status: "success" },
+            { id: 2, object: "БС-1255", technology: "3G, 4G", completionDate: "2023-11-28", status: "warning" },
+            { id: 3, object: "БС-1256", technology: "2G, RRL", completionDate: "2024-01-10", status: "danger" }
+        ];
+
+        // Function to add prediction cards
+        function renderPredictions() {
+            const container = document.getElementById('predictions-container');
+            container.innerHTML = '';
+            
+            samplePredictions.forEach(prediction => {
+                let statusClass, statusText;
+                
+                switch(prediction.status) {
+                    case 'success':
+                        statusClass = 'bg-green-100 text-green-800';
+                        statusText = 'Успешно';
+                        break;
+                    case 'warning':
+                        statusClass = 'bg-yellow-100 text-yellow-800';
+                        statusText = 'Предупреждение';
+                        break;
+                    case 'danger':
+                        statusClass = 'bg-red-100 text-red-800';
+                        statusText = 'Опасность';
+                        break;
+                    default:
+                        statusClass = 'bg-gray-100 text-gray-800';
+                        statusText = 'Неизвестно';
+                }
+                
+                const card = document.createElement('div');
+                card.className = 'prediction-card bg-white p-4 rounded-lg shadow border border-gray-200';
+                card.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h4 class="font-medium text-gray-900">Объект: ${prediction.object}</h4>
+                            <p class="text-sm text-gray-600 mt-1">Технологии: ${prediction.technology}</p>
+                        </div>
+                        <span class="px-2 py-1 text-xs font-semibold rounded-full ${statusClass}">
+                            ${statusText}
+                        </span>
+                    </div>
+                    <div class="mt-3 pt-3 border-t border-gray-200">
+                        <p class="text-sm"><span class="font-medium">Дата готовности:</span> ${prediction.completionDate}</p>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // Function to simulate getting coordinates
+        function getRandomCoordinates() {
+            // Random coordinates around Moscow area
+            const lat = 55.75 + (Math.random() * 0.2 - 0.1);
+            const lng = 37.6 + (Math.random() * 0.2 - 0.1);
+            
+            document.getElementById('latitude').value = lat.toFixed(6);
+            document.getElementById('longitude').value = lng.toFixed(6);
+            
+            // In a real app, you would use a map API like Google Maps or Leaflet
+            alert(`Координаты получены: ${lat.toFixed(6)}, ${lng.toFixed(6)}`);
+        }
+
+        // Event listeners
+        document.getElementById('calculate-btn').addEventListener('click', function() {
+            // In a real app, this would calculate the prediction
+            alert('Прогноз рассчитан! Новая запись добавлена в историю.');
+            
+            // Add a new prediction to the array
+            const newId = samplePredictions.length + 1;
+            const randomStatus = ['success', 'warning', 'danger'][Math.floor(Math.random() * 3)];
+            const randomDate = new Date();
+            randomDate.setDate(randomDate.getDate() + Math.floor(Math.random() * 60));
+            
+            samplePredictions.unshift({
+                id: newId,
+                object: `БС-${1200 + newId}`,
+                technology: ['2G', '3G', '4G', 'RRL', '4G, RRL', '3G, 4G'][Math.floor(Math.random() * 6)],
+                completionDate: randomDate.toISOString().split('T')[0],
+                status: randomStatus
+            });
+            
+            renderPredictions();
+        });
+
+        document.getElementById('get-coords-btn').addEventListener('click', getRandomCoordinates);
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function() {
+            renderPredictions();
+        });
+    </script>
+</body>
+</html>

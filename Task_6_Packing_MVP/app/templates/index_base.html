@@ -1,0 +1,795 @@
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Строительство сотовой связи</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Custom styles */
+        .map-container {
+            height: 400px;
+            width: 100%;
+        }
+        .prediction-card {
+            transition: all 0.3s ease;
+        }
+        .prediction-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .input-field:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 1px #3b82f6;
+        }
+        .excel-style {
+            border: 1px solid #d4d4d4;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+            overflow: auto;
+            max-width: 100%;
+        }
+        
+        .grid-container {
+            display: grid;
+            grid-template-columns: 100px 90px 120px 100px 90px 100px 80px 70px 80px 70px 100px;
+        }
+        
+        .grid-header {
+            background-color: #f2f2f2;
+            font-weight: bold;
+            padding: 4px 6px;
+            border: 1px solid #d4d4d4;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+       .grid-row {
+            display: contents;
+        }
+        
+        .grid-cell {
+            padding: 3px 5px;
+            border: 1px solid #e0e0e0;
+            background-color: white;
+            min-height: 22px;
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+        }
+        
+        .grid-row:hover .grid-cell {
+            background-color: #f5f5f5;
+        }
+        
+        .grid-row:nth-child(even) .grid-cell {
+            background-color: #fafafa;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 2px 4px;
+            border: 1px solid #d4d4d4;
+            font-size: 12px;
+            box-sizing: border-box;
+            background-color: #fff;
+        }
+        
+        select {
+            height: 22px;
+        }
+        
+        button {
+            padding: 3px 8px;
+            font-size: 11px;
+            cursor: pointer;
+            background-color: #e6e6e6;
+            border: 1px solid #d4d4d4;
+            border-radius: 2px;
+            margin-right: 3px;
+        }
+        
+        button:hover {
+            background-color: #d9d9d9;
+        }
+        
+        .action-buttons {
+            margin-top: 10px;
+            display: flex;
+            gap: 5px;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+        }
+        
+        .checkbox-item input {
+            width: auto;
+            margin-right: 3px;
+        }
+        
+        #excelFile {
+            display: none;
+        }
+        .tech-cell {
+            grid-column: span 3;
+            background-color: #f8f8f8;
+            display: flex;
+            justify-content: center;
+        }
+
+        .checkbox-group {
+            display: flex;
+            gap: 15px;
+            padding: 0 10px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+
+        .checkbox-item input {
+            width: auto;
+            margin: 0;
+        }
+        /* Обновляем grid-template-columns */
+        .grid-container {
+            display: grid;
+            grid-template-columns: 100px 90px 120px 100px 90px 100px 50px 50px 50px 70px 80px 70px 100px;
+        }
+
+        /* Стиль для заголовка "Технологии" */
+        .tech-header {
+            grid-column: span 3;
+            text-align: center;
+        }
+
+        /* Стили для чекбоксов */
+        .grid-cell input[type="checkbox"] {
+            margin: 0;
+            width: auto;
+        }
+
+        .grid-cell label {
+            margin-left: 3px;
+        }
+
+        /* Выравнивание чекбоксов по центру ячеек */
+        .grid-cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        
+        .items-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+        }
+        
+        .item {
+            border: 3px solid #000;
+            border-top: 30px solid;
+            position: relative;
+            margin-bottom: 1px;
+        }
+        
+        .item-header {
+            position: absolute;
+            top: -27px;
+            left: 5px;
+            right: 5px;
+        }
+        
+        .item-title {
+            width: 100%;
+            padding: 2px 5px;
+            font-weight: bold;
+            border: none;
+            background-color: transparent;
+            color: white;
+            font-size: 14px;
+        }
+        
+        .item-content {
+            padding: 8px 10px 5px 10px; /* Уменьшенные отступы */
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            padding-left: 35px; /* Уменьшенный отступ слева */
+        }
+        
+        .main-controls {
+            display: flex;
+            margin-bottom: 8px; /* Уменьшенный отступ */
+            gap: 10px; /* Добавлен промежуток между элементами */
+        }
+        
+        .object-section, .region-section, .date-section {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            min-width: 0;
+        }
+        
+        .left-right-section, .lr-sec{
+            display: flex;
+            flex-direction: row;
+            flex-grow: 1;
+            min-width: 0;
+        }
+        .free-space{
+            display: flex;
+            flex-direction: row;
+            flex-grow: 1;
+            min-width: 50%;
+        }
+        
+        select, input[type="text"], input[type="date"] {
+            margin-bottom: 4px; /* Уменьшенный отступ */
+            padding: 4px 5px; /* Уменьшенный padding */
+            font-size: 13px; /* Уменьшенный размер шрифта */
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        .toggle-section {
+            position: absolute;
+            left: 5px;
+            top: 10px;
+            cursor: pointer;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s ease;
+            border-radius: 4px;
+        }
+        
+        .toggle-section:hover {
+            background-color: #f0f0f0;
+        }
+        
+        .toggle-icon {
+            width: 14px;
+            height: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        .expanded-content {
+            display: none;
+            border-top: 1px solid #eee;
+            padding-top: 8px;
+            margin-top: 8px;
+        }
+        
+        .technologies, .related-object, 
+        .location-section, .place-section, 
+        .dates-section {
+            margin-bottom: 8px; /* Уменьшенный отступ */
+        }
+        
+        .dates-section h4, 
+        .technologies h4, 
+        .related-object h4,
+        .location-section h4,
+        .place-section h4 {
+            margin: 6px 0; /* Уменьшенные отступы заголовков */
+            font-size: 13px; /* Уменьшенный размер шрифта */
+        }
+        
+        .dates-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px; /* Уменьшенный промежуток */
+        }
+        
+        .date-item {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .date-item label {
+            font-size: 12px;
+            margin-bottom: 2px;
+        }
+        
+        .date-item input[type="date"] {
+            padding: 3px 5px;
+        }
+        
+        input[readonly] {
+            background-color: #f0f0f0;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            gap: 12px; /* Уменьшенный промежуток */
+            flex-wrap: wrap;
+        }
+        
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            font-size: 13px;
+        }
+        
+        .checkbox-item input {
+            margin-right: 4px;
+        }
+        
+        /* Стили для переключателя существующий/новый */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 55px; /* Уменьшенная ширина */
+            height: 22px; /* Уменьшенная высота */
+            margin-top: 3px;
+        }
+        
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 22px;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 14px; /* Уменьшенный размер */
+            width: 14px; /* Уменьшенный размер */
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .slider {
+            background-color: #2196F3;
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(33px); /* Подправленное смещение */
+        }
+        
+        .switch-labels {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            font-size: 11px; /* Уменьшенный размер шрифта */
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            pointer-events: none;
+        }
+        
+        .switch-labels span {
+            color: white;
+            padding: 0 3px;
+        }
+        
+        /* Более компактные radio кнопки */
+        .location-section label {
+            font-size: 13px;
+            margin-right: 10px;
+        }
+        .action-buttons button {
+            padding: 8px 15px;
+            margin-right: 10px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+
+        .action-buttons button:hover {
+            background-color: #45a049;
+        }
+        .excel-upload-container {
+            display: flex;
+            width: 100%;
+            max-width: 600px;
+            height: 120px;
+            border-radius: 4px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .excel-icon-section {
+            width: 60px;
+            background-color: #f8f9fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-left: 3px solid #217346;
+            font-size: 72pt;
+        }
+
+        .excel-icon-section i {
+            font-size: 28px;
+            color: #217346;
+        }
+
+        .dropzone {
+            flex-grow: 1;
+            background-color: #f1f3f4;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .dropzone:hover {
+            background-color: #e8eaed;
+        }
+
+        .dropzone p {
+            margin: 0;
+            text-align: center;
+            color: #5f6368;
+        }
+
+        .browse-link {
+            color: #217346;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+
+        .dropzone.active {
+            background-color: #e3f2fd;
+            border: 2px dashed #4285f4;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header Block -->
+    <header class="bg-white shadow-sm">
+        <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <!-- Logo -->
+                <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-xl">
+                    <i class="fas fa-tower-cell"></i>
+                </div>
+                <!-- Site Name -->
+                <h1 class="text-2xl font-bold text-gray-800">СтройСвязь</h1>
+            </div>
+            <!-- Navigation Icons -->
+            <nav class="flex items-center space-x-6">
+                <a href="#main" class="text-gray-600 hover:text-blue-600 transition-colors" title="Главная">
+                    <i class="fas fa-home text-xl"></i>
+                </a>
+                <a href="#login" class="text-gray-600 hover:text-blue-600 transition-colors" title="Вход">
+                    <i class="fas fa-sign-in-alt text-xl"></i>
+                </a>
+                <a href="#register" class="text-gray-600 hover:text-blue-600 transition-colors" title="Регистрация">
+                    <i class="fas fa-user-plus text-xl"></i>
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+
+        <section id="foresee_section" class="bg-white rounded-lg shadow-md p-6 mb-8 border border-gray-200">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Пакет для прогнозирования</h2>
+    <!-- Кнопка с иконкой Excel -->
+<div class="excel-upload-container">
+  <div class="excel-icon-section">
+    <i class="far fa-file-excel"></i>
+  </div>
+  <div class="dropzone" id="excelDropzone">
+    <p>Перетащите файл Excel сюда<br>или <span class="browse-link">выберите файл</span></p>
+    <input type="file" id="excelFileInput" accept=".xlsx, .xls" style="display: none;">
+  </div>
+</div>
+
+            <div class="items-list" id="itemsContainer">
+            <!-- Элементы будут добавляться здесь -->
+            </div>
+
+        </section>
+
+
+    </main>
+<script>
+        // Генерируем случайный цвет
+        function getRandomColor() {
+            const letters = '0123456789ABCDEF';
+            let color = '#';
+            for (let i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return "00000";
+        }
+        
+        // SVG для стрелки вправо (закрытое состояние)
+        const arrowRightIcon = `
+            <svg class="toggle-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        `;
+        
+        // SVG для стрелки вниз (открытое состояние)
+        const arrowDownIcon = `
+            <svg class="toggle-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        `;
+        
+        // Создаем новый элемент
+        function createItem() {
+            const color = getRandomColor();
+            const item = document.createElement('div');
+            item.className = 'item';
+            item.style.borderTopColor = color;
+            
+            item.innerHTML = `
+                <div class="item-header">
+                    <input type="text" class="item-title" placeholder="Название элемента" style="color: white;">
+                </div>
+                <div class="item-content">
+                    <div class="toggle-section">
+                        ${arrowRightIcon}
+                    </div>
+                    
+                    <div class="main-controls">
+                        <div class="object-section">
+                            <select>
+                                <option>Выберите объект</option>
+                                <option>Объект 1</option>
+                                <option>Объект 2</option>
+                                <option>Объект 3</option>
+                            </select>
+                            <div class="left-right-section">
+                                Новый&nbsp;
+                                <div class="object-type-toggle">
+                                    <label class="switch">
+                                        <input type="checkbox">
+                                        <span class="slider"></span>
+                                        <div class="switch-labels">
+                                        </div>
+                                    </label>
+                                </div>
+                                &nbsp;существующий
+                            </div>
+                        </div>
+                        <div class="region-section">
+                            <select>
+                                <option>Выберите регион</option>
+                                <option>Москва</option>
+                                <option>Санкт-Петербург</option>
+                                <option>Новосибирск</option>
+                            </select>
+                            <select>
+                                <option>Выберите индекс</option>
+                                <option>101000</option>
+                                <option>123456</option>
+                                <option>654321</option>
+                            </select>
+                        </div>
+                        <div class="date-section">
+                           <div class="lr-sec">Старт&nbsp;проекта:&nbsp;<input type="date"></div>
+                           <div class="lr-sec">Прогноз&nbsp;готовности:<input type="date" readonly></div>
+                        </div>
+                        <div class="free-space"></div>
+                    </div>
+                    
+                    <div class="expanded-content">
+                        <div class="technologies">
+                            <h4>Технологии:</h4>
+                            <div class="checkbox-group">
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="tech-2g"> <label for="tech-2g">2G</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="tech-3g"> <label for="tech-3g">3G</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="tech-4g"> <label for="tech-4g">4G</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="tech-rrl"> <label for="tech-rrl">RRL</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="related-object">
+                            <h4>Связанный объект:</h4>
+                            <select>
+                                <option>Выберите связанный объект</option>
+                                <option>Объект A</option>
+                                <option>Объект B</option>
+                                <option>Объект C</option>
+                            </select>
+                        </div>
+                        
+                        <div class="location-section">
+                            <h4>Размещение:</h4>
+                            <label class="switch">
+                                <input type="checkbox" name="location" checked>
+                                <span class="slider"></span>
+                                <div class="switch-labels">
+                                    <span>Город</span>
+                                    <span>За городом</span>
+                                </div>
+                            </label>
+                        </div>
+                        
+                        <div class="place-section">
+                            <h4>Место:</h4>
+                            <select>
+                                <option>Выберите место</option>
+                                <option>Место 1</option>
+                                <option>Место 2</option>
+                                <option>Место 3</option>
+                            </select>
+                        </div>
+                        
+                        <div class="dates-section">
+                            <h4>Даты:</h4>
+                            <div class="dates-grid">
+                                <div class="date-item">
+                                    <label>Готовность ТЗ</label>
+                                    <input type="date">
+                                </div>
+                                <div class="date-item">
+                                    <label>Готовность спецификации</label>
+                                    <input type="date">
+                                </div>
+                                <div class="date-item">
+                                    <label>Выбор подрядчика</label>
+                                    <input type="date">
+                                </div>
+                                <div class="date-item">
+                                    <label>Выдача оборудования</label>
+                                    <input type="date">
+                                </div>
+                                <div class="date-item">
+                                    <label>Готовность параметров</label>
+                                    <input type="date">
+                                </div>
+                                <div class="date-item">
+                                    <label>Готовность объекта</label>
+                                    <input type="date">
+                                </div>
+                                <div class="date-item">
+                                    <label>Интеграция</label>
+                                    <input type="date">
+                                </div>
+                                <div class="date-item">
+                                    <label>Приемка в мониторинг</label>
+                                    <input type="date">
+                                </div>
+                                <div class="date-item">
+                                    <label>Приемка в эксплуатацию</label>
+                                    <input type="date">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Добавляем обработчик для переключателя развертывания
+            const toggleSection = item.querySelector('.toggle-section');
+            const expandedContent = item.querySelector('.expanded-content');
+            
+            toggleSection.addEventListener('click', function() {
+                if (expandedContent.style.display === 'block') {
+                    expandedContent.style.display = 'none';
+                    this.innerHTML = arrowRightIcon;
+                } else {
+                    expandedContent.style.display = 'block';
+                    this.innerHTML = arrowDownIcon;
+                }
+            });
+            
+            return item;
+        }
+        
+        // Добавляем несколько элементов в список
+        const itemsContainer = document.getElementById('itemsContainer');
+        for (let i = 0; i < 3; i++) {
+            itemsContainer.appendChild(createItem());
+        }
+/*
+        const dropzone = document.getElementById('excelDropzone');
+        const fileInput = document.getElementById('excelFileInput');
+        const browseLink = document.querySelector('.browse-link');
+
+        // Обработка клика по области
+        browseLink.addEventListener('click', (e) => {
+            e.stopPropagation();
+            fileInput.click();
+        });
+
+        // Обработка выбора файла
+        fileInput.addEventListener('change', handleFileSelect);
+
+        // Обработчики для drag and drop
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropzone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropzone.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropzone.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight() {
+            dropzone.classList.add('active');
+        }
+
+        function unhighlight() {
+            dropzone.classList.remove('active');
+        }
+
+        dropzone.addEventListener('drop', handleDrop, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFiles(files);
+        }
+
+        function handleFileSelect(e) {
+            handleFiles(e.target.files);
+        }
+
+        function handleFiles(files) {
+            if (files.length > 0) {
+            const file = files[0];
+            if (file.name.endsWith('.xlsx') {
+                // Здесь обработка файла Excel
+                alert(`Файл "${file.name}" готов к загрузке`);
+                // Ваша функция для обработки Excel
+                // importFromExcel(file);
+            } else {
+                alert('Пожалуйста, выберите файл в формате .xlsx');
+            }
+            }
+        }
+*/
+
+    </script>
+</body>
+</html>

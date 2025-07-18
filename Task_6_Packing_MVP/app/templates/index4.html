@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Управление объектами связи</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            margin: 0;
+            padding: 10px;
+        }
+        
+        .excel-style {
+            border: 1px solid #d4d4d4;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+            overflow: auto;
+            max-width: 100%;
+        }
+        
+        .grid-container {
+            display: grid;
+            grid-template-columns: 100px 90px 120px 100px 90px 100px 80px 70px 80px 70px 100px;
+        }
+        
+        .grid-header {
+            background-color: #f2f2f2;
+            font-weight: bold;
+            padding: 4px 6px;
+            border: 1px solid #d4d4d4;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .grid-row {
+            display: contents;
+        }
+        
+        .grid-cell {
+            padding: 3px 5px;
+            border: 1px solid #e0e0e0;
+            background-color: white;
+            min-height: 22px;
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+        }
+        
+        .grid-row:hover .grid-cell {
+            background-color: #f5f5f5;
+        }
+        
+        .grid-row:nth-child(even) .grid-cell {
+            background-color: #fafafa;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 2px 4px;
+            border: 1px solid #d4d4d4;
+            font-size: 12px;
+            box-sizing: border-box;
+            background-color: #fff;
+        }
+        
+        select {
+            height: 22px;
+        }
+        
+        button {
+            padding: 3px 8px;
+            font-size: 11px;
+            cursor: pointer;
+            background-color: #e6e6e6;
+            border: 1px solid #d4d4d4;
+            border-radius: 2px;
+            margin-right: 3px;
+        }
+        
+        button:hover {
+            background-color: #d9d9d9;
+        }
+        
+        .action-buttons {
+            margin-top: 10px;
+            display: flex;
+            gap: 5px;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+        }
+        
+        .checkbox-item input {
+            width: auto;
+            margin-right: 3px;
+        }
+        
+        #excelFile {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="excel-style">
+        <div class="grid-container" id="connectionGrid">
+            <!-- Заголовки -->
+            <div class="grid-header">Дата</div>
+            <div class="grid-header">Тип работ</div>
+            <div class="grid-header">Название</div>
+            <div class="grid-header">Подрядчик</div>
+            <div class="grid-header">Объект</div>
+            <div class="grid-header">Связ. объект</div>
+            <div class="grid-header">Технологии</div>
+            <div class="grid-header">Индекс</div>
+            <div class="grid-header">Регион</div>
+            <div class="grid-header">Место</div>
+            <div class="grid-header">Действия</div>
+            
+            <!-- Строка для добавления -->
+            <div class="grid-row">
+                <div class="grid-cell"><input type="date" id="newStartDate"></div>
+                <div class="grid-cell">
+                    <select id="newWorkType">
+                        <option value="new">Новое</option>
+                        <option value="existing">Сущ.</option>
+                    </select>
+                </div>
+                <div class="grid-cell"><input type="text" id="newWorkName" placeholder="Название"></div>
+                <div class="grid-cell">
+                    <select id="newContractor">
+                        <option value="">Выберите</option>
+                        <option value="contractor1">Подр. 1</option>
+                        <option value="contractor2">Подр. 2</option>
+                        <option value="contractor3">Подр. 3</option>
+                    </select>
+                </div>
+                <div class="grid-cell">
+                    <select id="newObject">
+                        <option value="">Выберите</option>
+                        <option value="object1">Объект 1</option>
+                        <option value="object2">Объект 2</option>
+                        <option value="object3">Объект 3</option>
+                    </select>
+                </div>
+                <div class="grid-cell">
+                    <select id="newRelatedObject">
+                        <option value="">Выберите</option>
+                        <option value="related1">Связ. 1</option>
+                        <option value="related2">Связ. 2</option>
+                        <option value="related3">Связ. 3</option>
+                    </select>
+                </div>
+                <div class="grid-cell">
+                    <div class="checkbox-group">
+                        <div class="checkbox-item"><input type="checkbox" id="new2G" value="2G"><label>2G</label></div>
+                        <div class="checkbox-item"><input type="checkbox" id="new3G" value="3G"><label>3G</label></div>
+                        <div class="checkbox-item"><input type="checkbox" id="new4G" value="4G"><label>4G</label></div>
+                    </div>
+                </div>
+                <div class="grid-cell">
+                    <select id="newIndex">
+                        <option value="">Выберите</option>
+                        <option value="index1">Инд. 1</option>
+                        <option value="index2">Инд. 2</option>
+                        <option value="index3">Инд. 3</option>
+                    </select>
+                </div>
+                <div class="grid-cell">
+                    <select id="newRegion">
+                        <option value="">Выберите</option>
+                        <option value="region1">Рег. 1</option>
+                        <option value="region2">Рег. 2</option>
+                        <option value="region3">Рег. 3</option>
+                    </select>
+                </div>
+                <div class="grid-cell">
+                    <select id="newPlace">
+                        <option value="">Выберите</option>
+                        <option value="place1">Место 1</option>
+                        <option value="place2">Место 2</option>
+                        <option value="place3">Место 3</option>
+                    </select>
+                </div>
+                <div class="grid-cell"><button onclick="addConnection()">+</button></div>
+            </div>
+            
+            <!-- Здесь будут отображаться добавленные объекты связи -->
+            <div id="connectionsBody" style="display: contents;"></div>
+        </div>
+    </div>
+    
+    <div class="action-buttons">
+        <button onclick="importFromExcel()">Импорт Excel</button>
+        <button onclick="exportToExcel()">Экспорт Excel</button>
+        <input type="file" id="excelFile" accept=".xlsx, .xls">
+    </div>
+
+    <script>
+        let connections = [];
+        let editIndex = -1;
+        
+        function addConnection() {
+            const startDate = document.getElementById('newStartDate').value;
+            const workType = document.getElementById('newWorkType').value;
+            const workName = document.getElementById('newWorkName').value;
+            const contractor = document.getElementById('newContractor').value;
+            const object = document.getElementById('newObject').value;
+            const relatedObject = document.getElementById('newRelatedObject').value;
+            
+            const technologies = [];
+            if (document.getElementById('new2G').checked) technologies.push('2G');
+            if (document.getElementById('new3G').checked) technologies.push('3G');
+            if (document.getElementById('new4G').checked) technologies.push('4G');
+            
+            const index = document.getElementById('newIndex').value;
+            const region = document.getElementById('newRegion').value;
+            const place = document.getElementById('newPlace').value;
+            
+            if (!startDate || !workName) {
+                alert('Заполните обязательные поля (Дата и Название)');
+                return;
+            }
+            
+            const connection = {
+                startDate,
+                workType,
+                workName,
+                contractor,
+                object,
+                relatedObject,
+                technologies,
+                index,
+                region,
+                place
+            };
+            
+            if (editIndex === -1) {
+                connections.push(connection);
+            } else {
+                connections[editIndex] = connection;
+                editIndex = -1;
+                document.querySelector('#connectionGrid .grid-row:last-child button').textContent = '+';
+            }
+            
+            renderConnections();
+            clearInputs();
+        }
+        
+        function renderConnections() {
+            const container = document.getElementById('connectionsBody');
+            container.innerHTML = '';
+            
+            connections.forEach((connection, index) => {
+                const row = document.createElement('div');
+                row.className = 'grid-row';
+                
+                row.innerHTML = `
+                    <div class="grid-cell">${connection.startDate}</div>
+                    <div class="grid-cell">${connection.workType === 'new' ? 'Новое' : 'Сущ.'}</div>
+                    <div class="grid-cell">${connection.workName}</div>
+                    <div class="grid-cell">${getSelectedOptionText('newContractor', connection.contractor)}</div>
+                    <div class="grid-cell">${getSelectedOptionText('newObject', connection.object)}</div>
+                    <div class="grid-cell">${getSelectedOptionText('newRelatedObject', connection.relatedObject)}</div>
+                    <div class="grid-cell">${connection.technologies.join(', ')}</div>
+                    <div class="grid-cell">${getSelectedOptionText('newIndex', connection.index)}</div>
+                    <div class="grid-cell">${getSelectedOptionText('newRegion', connection.region)}</div>
+                    <div class="grid-cell">${getSelectedOptionText('newPlace', connection.place)}</div>
+                    <div class="grid-cell">
+                        <button class="edit-btn" onclick="editConnection(${index})">✎</button>
+                        <button class="delete-btn" onclick="deleteConnection(${index})">✕</button>
+                    </div>
+                `;
+                
+                container.appendChild(row);
+            });
+        }
+        
+        function getSelectedOptionText(selectId, value) {
+            const select = document.getElementById(selectId);
+            for (let i = 0; i < select.options.length; i++) {
+                if (select.options[i].value === value) {
+                    return select.options[i].text;
+                }
+            }
+            return '';
+        }
+        
+        function editConnection(index) {
+            const connection = connections[index];
+            
+            document.getElementById('newStartDate').value = connection.startDate;
+            document.getElementById('newWorkType').value = connection.workType;
+            document.getElementById('newWorkName').value = connection.workName;
+            document.getElementById('newContractor').value = connection.contractor;
+            document.getElementById('newObject').value = connection.object;
+            document.getElementById('newRelatedObject').value = connection.relatedObject;
+            
+            document.getElementById('new2G').checked = connection.technologies.includes('2G');
+            document.getElementById('new3G').checked = connection.technologies.includes('3G');
+            document.getElementById('new4G').checked = connection.technologies.includes('4G');
+            
+            document.getElementById('newIndex').value = connection.index;
+            document.getElementById('newRegion').value = connection.region;
+            document.getElementById('newPlace').value = connection.place;
+            
+            editIndex = index;
+            document.querySelector('#connectionGrid .grid-row:last-child button').textContent = '↻';
+        }
+        
+        function deleteConnection(index) {
+            if (confirm('Удалить эту запись?')) {
+                connections.splice(index, 1);
+                renderConnections();
+            }
+        }
+        
+        function clearInputs() {
+            document.getElementById('newStartDate').value = '';
+            document.getElementById('newWorkType').value = 'new';
+            document.getElementById('newWorkName').value = '';
+            document.getElementById('newContractor').value = '';
+            document.getElementById('newObject').value = '';
+            document.getElementById('newRelatedObject').value = '';
+            
+            document.getElementById('new2G').checked = false;
+            document.getElementById('new3G').checked = false;
+            document.getElementById('new4G').checked = false;
+            
+            document.getElementById('newIndex').value = '';
+            document.getElementById('newRegion').value = '';
+            document.getElementById('newPlace').value = '';
+        }
+        
+        function importFromExcel() {
+            document.getElementById('excelFile').click();
+        }
+        
+        document.getElementById('excelFile').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+                
+                if (jsonData.length > 0) {
+                    connections = jsonData.map(row => {
+                        return {
+                            startDate: row['Дата'] || '',
+                            workType: row['Тип работ'] === 'Сущ.' ? 'existing' : 'new',
+                            workName: row['Название'] || '',
+                            contractor: convertToValue('newContractor', row['Подрядчик']),
+                            object: convertToValue('newObject', row['Объект']),
+                            relatedObject: convertToValue('newRelatedObject', row['Связ. объект']),
+                            technologies: getTechnologiesFromString(row['Технологии']),
+                            index: convertToValue('newIndex', row['Индекс']),
+                            region: convertToValue('newRegion', row['Регион']),
+                            place: convertToValue('newPlace', row['Место'])
+                        };
+                    });
+                    
+                    renderConnections();
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        });
+        
+        function exportToExcel() {
+            if (connections.length === 0) {
+                alert('Нет данных для экспорта');
+                return;
+            }
+            
+            const data = connections.map(conn => ({
+                'Дата': conn.startDate,
+                'Тип работ': conn.workType === 'new' ? 'Новое' : 'Сущ.',
+                'Название': conn.workName,
+                'Подрядчик': getSelectedOptionText('newContractor', conn.contractor),
+                'Объект': getSelectedOptionText('newObject', conn.object),
+                'Связ. объект': getSelectedOptionText('newRelatedObject', conn.relatedObject),
+                'Технологии': conn.technologies.join(', '),
+                'Индекс': getSelectedOptionText('newIndex', conn.index),
+                'Регион': getSelectedOptionText('newRegion', conn.region),
+                'Место': getSelectedOptionText('newPlace', conn.place)
+            }));
+            
+            const worksheet = XLSX.utils.json_to_sheet(data);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Объекты связи");
+            
+            XLSX.writeFile(workbook, "объекты_связи.xlsx");
+        }
+        
+        function convertToValue(selectId, text) {
+            const select = document.getElementById(selectId);
+            for (let i = 0; i < select.options.length; i++) {
+                if (select.options[i].text === text) {
+                    return select.options[i].value;
+                }
+            }
+            return '';
+        }
+        
+        function getTechnologiesFromString(techString) {
+            if (!techString) return [];
+            
+            const techs = [];
+            if (techString.includes('2G')) techs.push('2G');
+            if (techString.includes('3G')) techs.push('3G');
+            if (techString.includes('4G')) techs.push('4G');
+            
+            return techs;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BaseStationAdjuster - ML сервис прогнозирования строительства</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .custom-border {
+            border: 3px solid #3b82f6;
+            border-radius: 16px;
+        }
+        .custom-shadow {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .input-focus:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+        }
+        .table-row:hover {
+            background-color: #f8fafc;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+        
+        .notification {
+            animation: slideIn 0.3s ease-out forwards;
+        }
+        
+        .notification.fade-out {
+            animation: fadeOut 0.5s ease-out forwards;
+        }
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #3b82f6;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #3b82f6;
+        }
+    </style>
+    <script>
+    function showNotification(type, message) {
+        // Создаем элемент уведомления
+        const notification = document.createElement('div');
+        
+        // Базовые классы
+        let baseClasses = 'notification p-4 rounded-lg shadow-lg max-w-xs flex items-start transition-all duration-300';
+        
+        // Добавляем классы в зависимости от типа
+        switch(type) {
+            case 'success':
+                baseClasses += ' bg-green-100 border-l-4 border-green-500 text-green-700';
+                break;
+            case 'error':
+                baseClasses += ' bg-red-100 border-l-4 border-red-500 text-red-700';
+                break;
+            case 'warning':
+                baseClasses += ' bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700';
+                break;
+            case 'info':
+                baseClasses += ' bg-blue-100 border-l-4 border-blue-500 text-blue-700';
+                break;
+            default:
+                baseClasses += ' bg-gray-100 border-l-4 border-gray-500 text-gray-700';
+        }
+        
+        notification.className = baseClasses;
+        
+        // Иконка в зависимости от типа
+        let icon = '';
+        switch(type) {
+            case 'success':
+                icon = '✓';
+                break;
+            case 'error':
+                icon = '✕';
+                break;
+            case 'warning':
+                icon = '⚠';
+                break;
+            case 'info':
+                icon = 'ℹ';
+                break;
+            default:
+                icon = '·';
+        }
+        
+        // Внутренний HTML уведомления
+        notification.innerHTML = `
+            <span class="font-bold text-xl mr-2">${icon}</span>
+            <div>
+                <p class="font-medium">${message}</p>
+                <div class="h-1 bg-white bg-opacity-50 mt-2 rounded-full overflow-hidden">
+                    <div class="h-full ${type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : type === 'warning' ? 'bg-yellow-500' : 'bg-blue-500'} progress-bar"></div>
+                </div>
+            </div>
+            <button class="ml-2 text-gray-500 hover:text-gray-700" onclick="this.parentElement.remove()">
+                &times;
+            </button>
+        `;
+        
+        // Добавляем уведомление в контейнер
+        const container = document.getElementById('notifications');
+        container.appendChild(notification);
+        
+        // Запускаем таймер для исчезновения
+        const duration = 5000; // 5 секунд
+        let timeLeft = duration;
+        const interval = 50; // интервал обновления прогресс-бара
+        const steps = duration / interval;
+        const stepSize = 100 / steps;
+        
+        const progressBar = notification.querySelector('.progress-bar');
+        let currentWidth = 100;
+        
+        const timer = setInterval(() => {
+            timeLeft -= interval;
+            currentWidth -= stepSize;
+            progressBar.style.width = `${currentWidth}%`;
+            
+            if (timeLeft <= 0) {
+                clearInterval(timer);
+                notification.classList.add('fade-out');
+                setTimeout(() => {
+                    notification.remove();
+                }, 500);
+            }
+        }, interval);
+        
+        // Остановка таймера при наведении
+        notification.addEventListener('mouseenter', () => {
+            clearInterval(timer);
+            progressBar.style.width = `${currentWidth}%`;
+        });
+        
+        // Возобновление таймера при уходе курсора
+        notification.addEventListener('mouseleave', () => {
+            timeLeft = currentWidth * duration / 100;
+            
+            const newTimer = setInterval(() => {
+                timeLeft -= interval;
+                currentWidth -= stepSize;
+                progressBar.style.width = `${currentWidth}%`;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(newTimer);
+                    notification.classList.add('fade-out');
+                    setTimeout(() => {
+                        notification.remove();
+                    }, 500);
+                }
+            }, interval);
+        });
+    }
+</script>
+</head>
+
+<body class="bg-white min-h-screen font-sans">

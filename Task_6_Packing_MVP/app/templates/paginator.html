@@ -1,0 +1,96 @@
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const table = document.querySelector('table.min-w-full');
+        const rows = table.querySelectorAll('tbody tr');
+        const totalRows = rows.length;
+        const rowsPerPage = 3;
+        let currentPage = 1;
+        
+        const paginationContainer = document.createElement('div');
+        paginationContainer.className = 'mt-4 flex justify-between items-center';
+        
+        const infoText = document.createElement('div');
+        infoText.className = 'text-sm text-gray-500';
+        
+        const buttonsContainer = document.createElement('div');
+        buttonsContainer.className = 'flex space-x-2';
+        
+        const prevButton = document.createElement('button');
+        prevButton.className = 'px-3 py-1 border border-gray-300 rounded text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors';
+        prevButton.innerHTML = '<i class="fas fa-chevron-left"></i>';
+        
+        const nextButton = document.createElement('button');
+        nextButton.className = 'px-3 py-1 border border-gray-300 rounded text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors';
+        nextButton.innerHTML = '<i class="fas fa-chevron-right"></i>';
+        
+        table.parentNode.insertBefore(paginationContainer, table.nextSibling);
+        paginationContainer.appendChild(infoText);
+        paginationContainer.appendChild(buttonsContainer);
+        
+        window.updateTablePagination = function() {
+            const rows = table.querySelectorAll('tbody tr'); 
+            const totalRows = rows.length;
+            const start = (currentPage - 1) * rowsPerPage;
+            const end = start + rowsPerPage;
+            
+            rows.forEach((row, index) => {
+                if (index >= start && index < end) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            
+            const shownStart = Math.min(start + 1, totalRows);
+            const shownEnd = Math.min(end, totalRows);
+            infoText.innerHTML = `Показано <span class="font-medium">${shownStart}</span> - <span class="font-medium">${shownEnd}</span> из <span class="font-medium">${totalRows}</span> записей`;
+            
+            updatePaginationButtons();
+        };
+        
+        function updatePaginationButtons() {
+            const rows = table.querySelectorAll('tbody tr');
+            const totalRows = rows.length;
+            const totalPages = Math.ceil(totalRows / rowsPerPage);
+            
+            buttonsContainer.innerHTML = '';
+            
+            const prevBtn = prevButton.cloneNode(true);
+            prevBtn.disabled = currentPage === 1;
+            prevBtn.addEventListener('click', () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    updateTablePagination();
+                }
+            });
+            buttonsContainer.appendChild(prevBtn);
+            
+            for (let i = 1; i <= totalPages; i++) {
+                const pageBtn = document.createElement('button');
+                pageBtn.className = `px-3 py-1 border rounded text-sm font-medium transition-colors ${
+                    currentPage === i 
+                        ? 'border-blue-500 text-white bg-blue-600 hover:bg-blue-700' 
+                        : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50'
+                }`;
+                pageBtn.textContent = i;
+                pageBtn.addEventListener('click', () => {
+                    currentPage = i;
+                    updateTablePagination();
+                });
+                buttonsContainer.appendChild(pageBtn);
+            }
+            
+            const nextBtn = nextButton.cloneNode(true);
+            nextBtn.disabled = currentPage === totalPages;
+            nextBtn.addEventListener('click', () => {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    updateTablePagination();
+                }
+            });
+            buttonsContainer.appendChild(nextBtn);
+        }
+        
+        updateTablePagination();
+    });
+</script>

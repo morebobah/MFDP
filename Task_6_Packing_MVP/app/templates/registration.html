@@ -1,0 +1,160 @@
+{% include "base.html" %}
+{% include "panel.html" %}
+<main class="flex items-center justify-center min-h-[calc(100vh-80px)]">
+<main class="flex items-center justify-center min-h-[calc(100vh-80px)]">
+    <!-- Блок регистрации -->
+    <div class="custom-border bg-white p-8 custom-shadow w-full max-w-md">
+        <div class="text-center mb-6">
+            <h2 class="text-2xl font-bold text-gray-800">Регистрация</h2>
+            <p class="text-gray-600 mt-2">Создайте новый аккаунт</p>
+        </div>
+        <form class="space-y-4" name='registration' id='registration-form'>
+            <div>
+                <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Адрес электронной почты</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-envelope text-gray-400"></i>
+                    </div>
+                    <input type="email" id="email" name='email' 
+                            class="input-focus pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-blue-500 transition-colors"
+                            placeholder="example@mail.com" required>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label for="first-name" class="block text-sm font-medium text-gray-700 mb-1">Имя</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-user text-gray-400"></i>
+                        </div>
+                        <input type="text" id="first-name" name='first_name'
+                                class="input-focus pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-blue-500 transition-colors"
+                                placeholder="Иван" required>
+                    </div>
+                </div>
+                <div>
+                    <label for="last-name" class="block text-sm font-medium text-gray-700 mb-1">Фамилия</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-user text-gray-400"></i>
+                        </div>
+                        <input type="text" id="last-name" name='last_name'
+                                class="input-focus pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-blue-500 transition-colors"
+                                placeholder="Иванов" required>
+                    </div>
+                </div>
+            </div>
+            
+            <div>
+                <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Пароль</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-lock text-gray-400"></i>
+                    </div>
+                    <input type="password" id="password" name="password"
+                            class="input-focus pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-blue-500 transition-colors"
+                            placeholder="Не менее 8 символов" required>
+                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                        <i id="toggle-password" class="fas fa-eye-slash text-gray-400 toggle-password"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="confirm-password-container">
+                <label for="confirm-password" class="block text-sm font-medium text-gray-700 mb-1">Подтверждение пароля</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-lock text-gray-400"></i>
+                    </div>
+                    <input type="password" id="confirm-password" 
+                            class="input-focus pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-blue-500 transition-colors"
+                            placeholder="Повторите пароль">
+                </div>
+            </div>
+            
+            <div class="pt-2">
+                <button type="submit" id='submit-form'
+                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center">
+                    <i class="fas fa-user-plus mr-2"></i>
+                    Зарегистрироваться
+                </button>
+            </div>
+        </form>
+        <div class="mt-6 text-center">
+            <p class="text-sm text-gray-600">
+                Уже есть аккаунт? 
+                <a href="/login" class="font-medium text-blue-600 hover:text-blue-500">Войти</a>
+            </p>
+        </div>
+    </div>
+</main>
+
+<script>
+    // Переключение видимости пароля
+    const togglePassword = document.getElementById('toggle-password');
+    const passwordInput = document.getElementById('password');
+    const confirmPasswordInput = document.getElementById('confirm-password');
+    const confirmPasswordContainer = document.getElementById('confirm-password-container');
+    const submitForm = document.getElementById('submit-form');
+
+    submitForm.addEventListener('click', function(event)
+    {
+        if(confirmPasswordContainer.style.display!='none')
+        {
+            if (passwordInput.value!=confirmPasswordInput.value)
+            {
+                showNotification('error', 'Пароли не совпадают!')
+                return;
+            }
+        }
+        const formData = new FormData(document.forms.registration);
+        fetch("/auth/register",
+        {
+            headers:
+            {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            method: "POST", 
+            body: formDataToJson(formData)
+        })
+        .then(async (response) => 
+        {
+            if(response.ok) return response.json();
+            let errorData = await response.json();
+            throw {'status': response.status, 'data': errorData };
+        })
+        .then(json => 
+        {
+            const result = json?.message || 'fail';
+            if(result==='success')window.location.href = '/';
+        })
+        .catch( e =>
+        {
+            const detail = e?.data?.detail || "Неизвестная ошибка";
+            detail.forEach((elem) => showNotification('error', elem.msg));
+        })
+        event.preventDefault();
+    });
+    
+    togglePassword.addEventListener('click', function() {
+        const isPasswordVisible = passwordInput.type === 'text';
+        
+        // Переключаем тип поля ввода
+        passwordInput.type = isPasswordVisible ? 'password' : 'text';
+        
+        // Меняем иконку
+        this.classList.toggle('fa-eye-slash');
+        this.classList.toggle('fa-eye');
+        
+        // Переключаем видимость подтверждения пароля
+        confirmPasswordContainer.style.display = isPasswordVisible ? 'block' : 'none';
+        
+        // Если подтверждение пароля видно, очищаем его
+        if (!isPasswordVisible) {
+            document.getElementById('confirm-password').value = '';
+        }
+});
+</script>
+{% include "foot.html" %}

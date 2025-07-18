@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Интерактивная карта с метками</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        #map {
+            width: 100%;
+            height: 100vh;
+        }
+        .control-panel {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+        }
+        button {
+            padding: 8px 12px;
+            margin: 5px 0;
+            cursor: pointer;
+        }
+        .coordinates {
+            margin-top: 10px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <div class="control-panel">
+        <button id="clearMarkers">Очистить метки</button>
+        <div class="coordinates" id="coordinates">Кликните на карту, чтобы поставить метку</div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Инициализация карты
+        const map = L.map('map').setView([55.751244, 37.618423], 10); // Москва по умолчанию
+
+        // Добавляем спутниковые тайлы от Mapbox (нужен access token)
+        // Для работы вам нужно зарегистрироваться на mapbox.com и получить свой токен
+        //const mapboxAccessToken = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw';
+        //const satelliteLayer = L.tileLayer(`https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/{z}/{x}/{y}?access_token=${mapboxAccessToken}`, {
+        //    attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        //    maxZoom: 19
+        //}).addTo(map);
+
+        // Альтернативный вариант (без необходимости токена) - используем MapTiler
+         const satelliteLayer = L.tileLayer('https://api.maptiler.com/maps/hybrid/{z}/{x}/{y}.jpg?key=nqjJGUVTGskXZsnIGmaJ ', {
+             attribution: '<a href="https://www.maptiler.com/copyright/" target="_blank">© MapTiler</a> <a href="https://www.openstreetmap.org/copyright" target="_blank">© OpenStreetMap contributors</a>'
+         }).addTo(map);
+
+        // Создаем слой для маркеров
+        const markersLayer = L.layerGroup().addTo(map);
+        
+        // Массив для хранения координат маркеров
+        const markersCoordinates = [];
+
+        // Обработчик клика по карте
+        map.on('click', function(e) {
+            // Создаем стандартный маркер
+            const marker = L.marker(e.latlng, {
+                draggable: true,
+                icon: L.icon({
+                    iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
+                    iconSize: [25, 41],
+                    iconAnchor: [12, 41],
+                    popupAnchor: [1, -34]
+                })
+            }).addTo(markersLayer);
+            
+            // Добавляем всплывающее окно с координатами
+            marker.bindPopup(`Координаты: ${e.latlng.lat.toFixed(6)}, ${e.latlng.lng.toFixed(6)}`).openPopup();
+            
+            // Добавляем координаты в массив
+            markersCoordinates.push(e.latlng);
+            
+            // Обновляем отображение координат
+            updateCoordinatesDisplay();
+            
+            // Обработчик перемещения маркера
+            marker.on('dragend', function(e) {
+                const marker = e.target;
+                const position = marker.getLatLng();
+                marker.setPopupContent(`Координаты: ${position.lat.toFixed(6)}, ${position.lng.toFixed(6)}`);
+                
+                // Обновляем координаты в массиве
+                const index = markersCoordinates.findIndex(coord => 
+                    coord.lat === e.oldLatLng.lat && coord.lng === e.oldLatLng.lng);
+                if (index !== -1) {
+                    markersCoordinates[index] = position;
+                }
+                
+                updateCoordinatesDisplay();
+            });
+        });
+
+        // Функция обновления отображения координат
+        function updateCoordinatesDisplay() {
+            const coordsDiv = document.getElementById('coordinates');
+            if (markersCoordinates.length === 0) {
+                coordsDiv.innerHTML = 'Кликните на карту, чтобы поставить метку';
+            } else {
+                let html = '<strong>Координаты меток:</strong><br>';
+                markersCoordinates.forEach((coord, index) => {
+                    html += `${index + 1}. Широта: ${coord.lat.toFixed(6)}, Долгота: ${coord.lng.toFixed(6)}<br>`;
+                });
+                coordsDiv.innerHTML = html;
+            }
+        }
+
+        // Очистка всех маркеров
+        document.getElementById('clearMarkers').addEventListener('click', function() {
+            markersLayer.clearLayers();
+            markersCoordinates.length = 0;
+            updateCoordinatesDisplay();
+        });
+
+        // Получение координат всех маркеров (можно использовать в других функциях)
+        function getAllMarkersCoordinates() {
+            return markersCoordinates.map(coord => ({
+                lat: coord.lat,
+                lng: coord.lng
+            }));
+        }
+
+        // Пример использования:
+        // console.log(getAllMarkersCoordinates());
+    </script>
+</body>
+</html>

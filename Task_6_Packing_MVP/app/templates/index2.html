@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Управление объектами связи</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        .package-container {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        
+        .package-header {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        
+        .connection-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+        
+        .connection-table th, .connection-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        
+        .connection-table th {
+            background-color: #f2f2f2;
+        }
+        
+        .connection-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        .connection-table tr:hover {
+            background-color: #f1f1f1;
+        }
+        
+        .action-buttons {
+            margin-top: 15px;
+        }
+        
+        .action-buttons button {
+            padding: 8px 15px;
+            margin-right: 10px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+        
+        .action-buttons button:hover {
+            background-color: #45a049;
+        }
+        
+        .edit-btn, .delete-btn {
+            padding: 5px 10px;
+            margin-right: 5px;
+            cursor: pointer;
+        }
+        
+        .edit-btn {
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 3px;
+        }
+        
+        .delete-btn {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            border-radius: 3px;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+        }
+        
+        .checkbox-item {
+            margin-right: 15px;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="package-container">
+        <div class="package-header">Пакет объектов связи</div>
+        
+        <table class="connection-table" id="connectionTable">
+            <thead>
+                <tr>
+                    <th>Дата начала</th>
+                    <th>Тип работ</th>
+                    <th>Название работ</th>
+                    <th>Подрядчик</th>
+                    <th>Объект</th>
+                    <th>Связанный объект</th>
+                    <th>Технологии</th>
+                    <th>Индекс</th>
+                    <th>Регион</th>
+                    <th>Место</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody id="addRow">
+                <tr>
+                    <td><input type="date" id="newStartDate"></td>
+                    <td>
+                        <select id="newWorkType">
+                            <option value="new">Новое</option>
+                            <option value="existing">Существующее</option>
+                        </select>
+                    </td>
+                    <td><input type="text" id="newWorkName" placeholder="Название работ"></td>
+                    <td>
+                        <select id="newContractor">
+                            <option value="">Выберите подрядчика</option>
+                            <option value="contractor1">Подрядчик 1</option>
+                            <option value="contractor2">Подрядчик 2</option>
+                            <option value="contractor3">Подрядчик 3</option>
+                        </select>
+                    </td>
+                    <td>
+                        <select id="newObject">
+                            <option value="">Выберите объект</option>
+                            <option value="object1">Объект 1</option>
+                            <option value="object2">Объект 2</option>
+                            <option value="object3">Объект 3</option>
+                        </select>
+                    </td>
+                    <td>
+                        <select id="newRelatedObject">
+                            <option value="">Выберите связанный объект</option>
+                            <option value="related1">Связанный 1</option>
+                            <option value="related2">Связанный 2</option>
+                            <option value="related3">Связанный 3</option>
+                        </select>
+                    </td>
+                    <td>
+                        <div class="checkbox-group">
+                            <div class="checkbox-item"><input type="checkbox" id="new2G" value="2G"> <label for="new2G">2G</label></div>
+                            <div class="checkbox-item"><input type="checkbox" id="new3G" value="3G"> <label for="new3G">3G</label></div>
+                            <div class="checkbox-item"><input type="checkbox" id="new4G" value="4G"> <label for="new4G">4G</label></div>
+                            <div class="checkbox-item"><input type="checkbox" id="newRRL" value="RRL"> <label for="newRRL">RRL</label></div>
+                        </div>
+                    </td>
+                    <td>
+                        <select id="newIndex">
+                            <option value="">Выберите индекс</option>
+                            <option value="index1">Индекс 1</option>
+                            <option value="index2">Индекс 2</option>
+                            <option value="index3">Индекс 3</option>
+                        </select>
+                    </td>
+                    <td>
+                        <select id="newRegion">
+                            <option value="">Выберите регион</option>
+                            <option value="region1">Регион 1</option>
+                            <option value="region2">Регион 2</option>
+                            <option value="region3">Регион 3</option>
+                        </select>
+                    </td>
+                    <td>
+                        <select id="newPlace">
+                            <option value="">Выберите место</option>
+                            <option value="place1">Место 1</option>
+                            <option value="place2">Место 2</option>
+                            <option value="place3">Место 3</option>
+                        </select>
+                    </td>
+                    <td><button onclick="addConnection()">Добавить</button></td>
+                </tr>
+            </tbody>
+            <tbody id="connectionsBody">
+                <!-- Здесь будут отображаться добавленные объекты связи -->
+            </tbody>
+        </table>
+        
+        <div class="action-buttons">
+            <button onclick="importFromExcel()">Загрузить из Excel</button>
+            <input type="file" id="excelFile" accept=".xlsx, .xls" style="display: none;">
+        </div>
+    </div>
+
+    <script>
+        let connections = [];
+        let editIndex = -1;
+        
+        function addConnection() {
+            const startDate = document.getElementById('newStartDate').value;
+            const workType = document.getElementById('newWorkType').value;
+            const workName = document.getElementById('newWorkName').value;
+            const contractor = document.getElementById('newContractor').value;
+            const object = document.getElementById('newObject').value;
+            const relatedObject = document.getElementById('newRelatedObject').value;
+            
+            const technologies = [];
+            if (document.getElementById('new2G').checked) technologies.push('2G');
+            if (document.getElementById('new3G').checked) technologies.push('3G');
+            if (document.getElementById('new4G').checked) technologies.push('4G');
+            if (document.getElementById('newRRL').checked) technologies.push('RRL');
+            
+            const index = document.getElementById('newIndex').value;
+            const region = document.getElementById('newRegion').value;
+            const place = document.getElementById('newPlace').value;
+            
+            if (!startDate || !workName) {
+                alert('Пожалуйста, заполните обязательные поля (Дата начала и Название работ)');
+                return;
+            }
+            
+            const connection = {
+                startDate,
+                workType,
+                workName,
+                contractor,
+                object,
+                relatedObject,
+                technologies,
+                index,
+                region,
+                place
+            };
+            
+            if (editIndex === -1) {
+                connections.push(connection);
+            } else {
+                connections[editIndex] = connection;
+                editIndex = -1;
+                document.getElementById('addRow').querySelector('button').textContent = 'Добавить';
+            }
+            
+            renderConnections();
+            clearInputs();
+        }
+        
+        function renderConnections() {
+            const tbody = document.getElementById('connectionsBody');
+            tbody.innerHTML = '';
+            
+            connections.forEach((connection, index) => {
+                const row = document.createElement('tr');
+                
+                row.innerHTML = `
+                    <td>${connection.startDate}</td>
+                    <td>${connection.workType === 'new' ? 'Новое' : 'Существующее'}</td>
+                    <td>${connection.workName}</td>
+                    <td>${getSelectedOptionText('newContractor', connection.contractor)}</td>
+                    <td>${getSelectedOptionText('newObject', connection.object)}</td>
+                    <td>${getSelectedOptionText('newRelatedObject', connection.relatedObject)}</td>
+                    <td>${connection.technologies.join(', ')}</td>
+                    <td>${getSelectedOptionText('newIndex', connection.index)}</td>
+                    <td>${getSelectedOptionText('newRegion', connection.region)}</td>
+                    <td>${getSelectedOptionText('newPlace', connection.place)}</td>
+                    <td>
+                        <button class="edit-btn" onclick="editConnection(${index})">Редактировать</button>
+                        <button class="delete-btn" onclick="deleteConnection(${index})">Удалить</button>
+                    </td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        }
+        
+        function getSelectedOptionText(selectId, value) {
+            const select = document.getElementById(selectId);
+            for (let i = 0; i < select.options.length; i++) {
+                if (select.options[i].value === value) {
+                    return select.options[i].text;
+                }
+            }
+            return '';
+        }
+        
+        function editConnection(index) {
+            const connection = connections[index];
+            
+            document.getElementById('newStartDate').value = connection.startDate;
+            document.getElementById('newWorkType').value = connection.workType;
+            document.getElementById('newWorkName').value = connection.workName;
+            document.getElementById('newContractor').value = connection.contractor;
+            document.getElementById('newObject').value = connection.object;
+            document.getElementById('newRelatedObject').value = connection.relatedObject;
+            
+            document.getElementById('new2G').checked = connection.technologies.includes('2G');
+            document.getElementById('new3G').checked = connection.technologies.includes('3G');
+            document.getElementById('new4G').checked = connection.technologies.includes('4G');
+            document.getElementById('newRRL').checked = connection.technologies.includes('RRL');
+            
+            document.getElementById('newIndex').value = connection.index;
+            document.getElementById('newRegion').value = connection.region;
+            document.getElementById('newPlace').value = connection.place;
+            
+            editIndex = index;
+            document.getElementById('addRow').querySelector('button').textContent = 'Обновить';
+        }
+        
+        function deleteConnection(index) {
+            if (confirm('Вы уверены, что хотите удалить эту запись?')) {
+                connections.splice(index, 1);
+                renderConnections();
+            }
+        }
+        
+        function clearInputs() {
+            document.getElementById('newStartDate').value = '';
+            document.getElementById('newWorkType').value = 'new';
+            document.getElementById('newWorkName').value = '';
+            document.getElementById('newContractor').value = '';
+            document.getElementById('newObject').value = '';
+            document.getElementById('newRelatedObject').value = '';
+            
+            document.getElementById('new2G').checked = false;
+            document.getElementById('new3G').checked = false;
+            document.getElementById('new4G').checked = false;
+            document.getElementById('newRRL').checked = false;
+            
+            document.getElementById('newIndex').value = '';
+            document.getElementById('newRegion').value = '';
+            document.getElementById('newPlace').value = '';
+        }
+        
+        function importFromExcel() {
+            document.getElementById('excelFile').click();
+        }
+        
+        document.getElementById('excelFile').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+                
+                if (jsonData.length > 0) {
+                    connections = jsonData.map(row => {
+                        // Преобразование данных из Excel в наш формат
+                        return {
+                            startDate: row['Дата начала'] || '',
+                            workType: row['Тип работ'] === 'Существующее' ? 'existing' : 'new',
+                            workName: row['Название работ'] || '',
+                            contractor: convertToValue('newContractor', row['Подрядчик']),
+                            object: convertToValue('newObject', row['Объект']),
+                            relatedObject: convertToValue('newRelatedObject', row['Связанный объект']),
+                            technologies: getTechnologiesFromString(row['Технологии']),
+                            index: convertToValue('newIndex', row['Индекс']),
+                            region: convertToValue('newRegion', row['Регион']),
+                            place: convertToValue('newPlace', row['Место'])
+                        };
+                    });
+                    
+                    renderConnections();
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        });
+        
+        function convertToValue(selectId, text) {
+            const select = document.getElementById(selectId);
+            for (let i = 0; i < select.options.length; i++) {
+                if (select.options[i].text === text) {
+                    return select.options[i].value;
+                }
+            }
+            return '';
+        }
+        
+        function getTechnologiesFromString(techString) {
+            if (!techString) return [];
+            
+            const techs = [];
+            if (techString.includes('2G')) techs.push('2G');
+            if (techString.includes('3G')) techs.push('3G');
+            if (techString.includes('4G')) techs.push('4G');
+            if (techString.includes('RRL')) techs.push('RRL');
+            
+            return techs;
+        }
+    </script>
+</body>
+</html>

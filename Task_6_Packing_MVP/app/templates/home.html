@@ -1,0 +1,276 @@
+{% include "base.html" %}
+{% include "panel.html" %}
+<main class="container mx-auto py-8 px-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <!-- Блок загрузки изображения -->
+        <div class="custom-border bg-white p-6 custom-shadow">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Загрузка изображения</h2>
+            <form id="ml-form" class="space-y-4" name="imageupload">
+                <div class="space-y-4">
+                    <div class="flex items-center justify-center w-full">
+                        <label for="dropzone-file" class="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+                            <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                <i class="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-2"></i>
+                                <p class="text-sm text-gray-500">Перетащите изображение сюда или кликните для выбора</p>
+                            </div>
+                            <input id="dropzone-file" type="file" class="hidden" accept="image/*" name="image"/>
+                        </label>
+                        &nbsp;
+                        <div id="preview-container" class="flex flex-col items-center justify-center w-60 h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors"> <!--class="hidden mt-4"-->
+                            <h3 class="text-sm font-medium text-gray-700 mb-2" id="preview-notice">Предпросмотр:</h3>
+                            <img id="preview-image" class="max-h-28 max-w-54 ounded border border-gray-200 mx-auto">
+                        </div>
+                    </div>
+                    <input type="hidden" name="user_id" value="{{user.id}}">
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-500">Макс. размер: 5MB</span>
+                        <button type="submit" id="submit-btn" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-1 px-3 rounded transition-colors">
+                            <i class="fas fa-upload mr-1"></i> Загрузить
+                        </button>
+                    </div>
+                    
+                </div>
+            </form>
+        </div>
+
+        <!-- Блок таблицы -->
+        <div class="md:col-span-2 custom-border bg-white p-6 custom-shadow">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">История запросов модели</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Изображение</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Результат</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Стоимость</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Дата</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Статус</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <script>
+                            function load_updates(status_object, result_object, task_id)
+                            {
+                                return one_more
+                            }
+                        </script>
+                        {% for line in table %}
+                        <tr class="table-row">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{line['id']}}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <img src='/image/{{line['image']}}' width=50px height=20px>
+                            </td>
+                            <td id="result{{line['id']}}" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{line['result']}}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{line['cost']}}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{line['date']}}</td>
+                            <td id="status{{line['id']}}" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {%if line['status']=='complete'%}
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">{{line['status']}}</span>
+                                {% else %}
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">{{line['status']}}</span>
+                                    <script>
+                                        const status{{line['id']}} = document.getElementById('status{{line['id']}}');
+                                        const result{{line['id']}} = document.getElementById('result{{line['id']}}');
+                                        let retryDelay{{line['id']}} = 1000;
+                                        function fetchWithRetry{{line['id']}}() {
+                                            fetch("/ml/task/{{line['id']}}", {method: "GET"})
+                                              .then(response => {
+                                                if (!response.ok) throw new Error('Ошибка сети');
+                                                retryDelay{{line['id']}} = 1000;  // Сброс задержки при успехе
+                                                return response.json();
+                                              })
+                                              .then(json => {
+                                                if(Object.keys(json).includes('status'))
+                                                    if(json['status']=='complete')
+                                                    {
+                                                        status{{line['id']}}.innerHTML = '<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">complete</span>'
+                                                        result{{line['id']}}.innerHTML = json['result']
+                                                        balanceUpdate()
+                                                    }else{
+                                                        setTimeout(fetchWithRetry{{line['id']}}, retryDelay{{line['id']}});
+                                                        retryDelay{{line['id']}} *= 2;
+                                                    }
+                                                
+                                              })
+                                              .catch(error => {
+                                                console.error('Ошибка:', error);
+                                                setTimeout(fetchWithRetry{{line['id']}}, retryDelay{{line['id']}});
+                                                retryDelay{{line['id']}} *= 2;
+                                              });
+                                          }
+                                          setTimeout(fetchWithRetry{{line['id']}}, retryDelay{{line['id']}});
+                                    </script>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% include "paginator.html" %}
+        </div>
+    </div>
+</main>
+
+<script>
+    function insertRowToTop(tableData)
+    {
+        const tbody = document.querySelector('tbody.bg-white.divide-y.divide-gray-200');
+        const newRow = document.createElement('tr');
+        newRow.className = 'table-row';
+        
+        newRow.innerHTML = `
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${tableData.id}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <img src='/image/${tableData.image}' width=50px height=20px>
+            </td>
+            <td id="result${tableData.id}" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${tableData.result}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${tableData.cost}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${tableData.date}</td>
+            <td id="status${tableData.id}" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                ${tableData.status === 'complete' ? 
+                    '<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">complete</span>' : 
+                    '<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">' + tableData.status + '</span>'}
+            </td>
+        `;
+        if (tableData.status !== 'complete')
+        {
+            const script = document.createElement('script');
+            script.text = `
+                const status${tableData.id} = document.getElementById('status${tableData.id}');
+                const result${tableData.id} = document.getElementById('result${tableData.id}');
+                let retryDelay${tableData.id} = 1000;
+                function fetchWithRetry${tableData.id}() {
+                    fetch("/ml/task/${tableData.id}", {method: "GET"})
+                    .then(response => {
+                        if (!response.ok) throw new Error('Ошибка сети');
+                        retryDelay${tableData.id} = 1000;
+                        return response.json();
+                    })
+                    .then(json => {
+                        if(Object.keys(json).includes('status'))
+                            if(json['status']=='complete') {
+                                status${tableData.id}.innerHTML = '<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">complete</span>'
+                                result${tableData.id}.innerHTML = json['result']
+                                balanceUpdate()
+                            } else {
+                                setTimeout(fetchWithRetry${tableData.id}, retryDelay${tableData.id});
+                                retryDelay${tableData.id} *= 2;
+                            }
+                    })
+                    .catch(error => {
+                        console.error('Ошибка:', error);
+                        setTimeout(fetchWithRetry${tableData.id}, retryDelay${tableData.id});
+                        retryDelay${tableData.id} *= 2;
+                    });
+                }
+                setTimeout(fetchWithRetry${tableData.id}, retryDelay${tableData.id});`;
+            
+            tbody.insertBefore(newRow, tbody.firstChild);
+            tbody.insertBefore(script, tbody.firstChild.nextSibling);
+        } else
+        {
+            tbody.insertBefore(newRow, tbody.firstChild);
+        }
+    }
+
+    function updatePage(taskid)
+    {
+        fetch(`/ml/task/${taskid}`, {method: "GET"})
+        .then(response => {
+            if (!response.ok) throw new Error("Ошибка сети");
+            return response.json();
+        })
+        .then(json => 
+        {
+            console.log(json);
+            insertRowToTop(json);
+            updateTablePagination();
+            //{ id: 155, user_id: 101, image: "aebae3b2-66fb-498b-8987-2df1b1d265f5.png", status: "pending", result: "", cost: 30 }
+            // insertRowToTop({
+            //     id: 155,
+            //     image: 'aebae3b2-66fb-498b-8987-2df1b1d265f5.png',
+            //     result: '',
+            //     cost: '30',
+            //     date: '2023-01-01',
+            //     status: 'pending'
+            // });
+        })
+        .catch( e =>
+        {
+            console.log(e.status);
+        });
+    }
+
+    const submitBTN = document.getElementById('submit-btn');
+
+    submitBTN.addEventListener('click', function(event)
+    {
+        const dropzoneFile = document.getElementById("dropzone-file");
+        console.log(dropzoneFile.files.length)
+        console.log(dropzoneFile.value)
+        
+        if(dropzoneFile.files.length==0 || dropzoneFile.value == 'C:\\fakepath\\unknown.png')
+        {
+            showNotification('warning', 'Добавьте изображение для загрузки на сервис!');
+            event.preventDefault();
+            return;
+        }
+        const formData = new FormData(document.forms.imageupload);
+        formData.append('profile-image', dropzoneFile.value);
+        const formDataObj = new Response(formData).text();
+        fetch("/ml/task",
+        {
+            method: "POST", 
+            body: formData
+        })
+        .then(async (response) => 
+        {
+            if(response.ok) return response.json();
+            let errorData = await response.json();
+            throw {'status': response.status, 'data': errorData };
+        })
+        .then(json => 
+        {
+            const result = json?.message || 'fail';
+            if(result==='success')
+            {
+                const task_id = json?.value || 0;
+                const detail = json?.detail || 'Успешно, но не известно!'
+                showNotification('success', detail);
+                console.log(task_id)
+                updatePage(task_id)
+            }
+        })
+        .catch( e =>
+        {
+            const detail = e?.data?.detail || "Неизвестная ошибка";
+            showNotification('error', detail);
+            console.log(e.status);
+        });
+        event.preventDefault();
+    });
+
+    // Обработка загрузки изображения с предпросмотром
+    const dropzone = document.getElementById('dropzone-file');
+    const previewContainer = document.getElementById('preview-container');
+    const previewNotice = document.getElementById('preview-notice');
+    const previewImage = document.getElementById('preview-image');
+
+    dropzone.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                previewImage.src = event.target.result;
+                previewContainer.classList.remove('hidden');
+                previewNotice.classList.add('hidden');
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+
+
+</script>
+{% include "foot.html" %}

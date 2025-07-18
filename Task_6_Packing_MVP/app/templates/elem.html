@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Список элементов</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        
+        .items-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+        }
+        
+        .item {
+            border: 3px solid #000;
+            border-top: 30px solid;
+            position: relative;
+            margin-bottom: 1px;
+        }
+        
+        .item-header {
+            position: absolute;
+            top: -27px;
+            left: 5px;
+            right: 5px;
+        }
+        
+        .item-title {
+            width: 100%;
+            padding: 2px 5px;
+            font-weight: bold;
+            border: none;
+            background-color: transparent;
+            color: white;
+            font-size: 14px;
+        }
+        
+        .item-content {
+            padding: 8px 10px 5px 10px; /* Уменьшенные отступы */
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            padding-left: 35px; /* Уменьшенный отступ слева */
+        }
+        
+        .main-controls {
+            display: flex;
+            margin-bottom: 8px; /* Уменьшенный отступ */
+            gap: 10px; /* Добавлен промежуток между элементами */
+        }
+        
+        .object-section, .region-section, .date-section {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            min-width: 0;
+        }
+        
+        .left-right-section, .lr-sec{
+            display: flex;
+            flex-direction: row;
+            flex-grow: 1;
+            min-width: 0;
+        }
+        .free-space{
+            display: flex;
+            flex-direction: row;
+            flex-grow: 1;
+            min-width: 50%;
+        }
+        
+        select, input[type="text"], input[type="date"] {
+            margin-bottom: 4px; /* Уменьшенный отступ */
+            padding: 4px 5px; /* Уменьшенный padding */
+            font-size: 13px; /* Уменьшенный размер шрифта */
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        .toggle-section {
+            position: absolute;
+            left: 5px;
+            top: 10px;
+            cursor: pointer;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s ease;
+            border-radius: 4px;
+        }
+        
+        .toggle-section:hover {
+            background-color: #f0f0f0;
+        }
+        
+        .toggle-icon {
+            width: 14px;
+            height: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        .expanded-content {
+            display: none;
+            border-top: 1px solid #eee;
+            padding-top: 8px;
+            margin-top: 8px;
+        }
+        
+        .technologies, .related-object, 
+        .location-section, .place-section, 
+        .dates-section {
+            margin-bottom: 8px; /* Уменьшенный отступ */
+        }
+        
+        .dates-section h4, 
+        .technologies h4, 
+        .related-object h4,
+        .location-section h4,
+        .place-section h4 {
+            margin: 6px 0; /* Уменьшенные отступы заголовков */
+            font-size: 13px; /* Уменьшенный размер шрифта */
+        }
+        
+        .dates-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px; /* Уменьшенный промежуток */
+        }
+        
+        .date-item {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .date-item label {
+            font-size: 12px;
+            margin-bottom: 2px;
+        }
+        
+        .date-item input[type="date"] {
+            padding: 3px 5px;
+        }
+        
+        input[readonly] {
+            background-color: #f0f0f0;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            gap: 12px; /* Уменьшенный промежуток */
+            flex-wrap: wrap;
+        }
+        
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            font-size: 13px;
+        }
+        
+        .checkbox-item input {
+            margin-right: 4px;
+        }
+        
+        /* Стили для переключателя существующий/новый */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 55px; /* Уменьшенная ширина */
+            height: 22px; /* Уменьшенная высота */
+            margin-top: 3px;
+        }
+        
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 22px;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 14px; /* Уменьшенный размер */
+            width: 14px; /* Уменьшенный размер */
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .slider {
+            background-color: #2196F3;
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(33px); /* Подправленное смещение */
+        }
+        
+        .switch-labels {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            font-size: 11px; /* Уменьшенный размер шрифта */
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            pointer-events: none;
+        }
+        
+        .switch-labels span {
+            color: white;
+            padding: 0 3px;
+        }
+        
+        /* Более компактные radio кнопки */
+        .location-section label {
+            font-size: 13px;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="items-list" id="itemsContainer">
+        <!-- Элементы будут добавляться здесь -->
+    </div>
+
+    <script>
+        // Генерируем случайный цвет
+        function getRandomColor() {
+            const letters = '0123456789ABCDEF';
+            let color = '#';
+            for (let i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
+        }
+        
+        // SVG для стрелки вправо (закрытое состояние)
+        const arrowRightIcon = `
+            <svg class="toggle-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        `;
+        
+        // SVG для стрелки вниз (открытое состояние)
+        const arrowDownIcon = `
+            <svg class="toggle-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        `;
+        
+        // Создаем новый элемент
+        function createItem() {
+            const color = getRandomColor();
+            const item = document.createElement('div');
+            item.className = 'item';
+            item.style.borderTopColor = color;
+            
+            item.innerHTML = `
+                <div class="item-header">
+                    <input type="text" class="item-title" placeholder="Название элемента" style="color: white;">
+                </div>
+                <div class="item-content">
+                    <div class="toggle-section">
+                        ${arrowRightIcon}
+                    </div>
+                    
+                    <div class="main-controls">
+                        <div class="object-section">
+                            <select>
+                                <option>Выберите объект</option>
+                                <option>Объект 1</option>
+                                <option>Объект 2</option>
+                                <option>Объект 3</option>
+                            </select>
+                            <div class="left-right-section">
+                            Новый&nbsp;
+                            <div class="object-type-toggle">
+                                <label class="switch">
+                                    <input type="checkbox">
+                                    <span class="slider"></span>
+                                    <div class="switch-labels">
+                                        <span>Сущ.</span>
+                                        <span>Новый</span>
+                                    </div>
+                                </label>
+                            </div>
+                            &nbsp;существующий
+                            </div>
+                        </div>
+                        <div class="region-section">
+                            <select>
+                                <option>Выберите регион</option>
+                                <option>Москва</option>
+                                <option>Санкт-Петербург</option>
+                                <option>Новосибирск</option>
+                            </select>
+                            <select>
+                                <option>Выберите индекс</option>
+                                <option>101000</option>
+                                <option>123456</option>
+                                <option>654321</option>
+                            </select>
+                        </div>
+                        <div class="date-section">
+                           <div class="lr-sec">Старт&nbsp;проекта:&nbsp;<input type="date"></div>
+                           <div class="lr-sec">Прогноз&nbsp;готовности:<input type="date" readonly></div>
+                        </div>
+                        <div class="free-space"></div>
+                    </div>
+                    
+                    <div class="expanded-content">
+                        <div class="technologies">
+                            <h4>Технологии:</h4>
+                            <div class="checkbox-group">
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="tech-2g"> <label for="tech-2g">2G</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="tech-3g"> <label for="tech-3g">3G</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="tech-4g"> <label for="tech-4g">4G</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="tech-rrl"> <label for="tech-rrl">RRL</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="related-object">
+                            <h4>Связанный объект:</h4>
+                            <select>
+                                <option>Выберите связанный объект</option>
+                                <option>Объект A</option>
+                                <option>Объект B</option>
+                                <option>Объект C</option>
+                            </select>
+                        </div>
+                        
+                        <div class="location-section">
+                            <h4>Размещение:</h4>
+                            <label class="switch">
+                                <input type="checkbox" name="location" checked>
+                                <span class="slider"></span>
+                                <div class="switch-labels">
+                                    <span>Город</span>
+                                    <span>За городом</span>
+                                </div>
+                            </label>
+                        </div>
+                        
+                        <div class="place-section">
+                            <h4>Место:</h4>
+                            <select>
+                                <option>Выберите место</option>
+                                <option>Место 1</option>
+                                <option>Место 2</option>
+                                <option>Место 3</option>
+                            </select>
+                        </div>
+                        
+                        <div class="dates-section">
+                            <h4>Даты:</h4>
+                            <div class="dates-grid">
+                                <div class="date-item">
+                                    <label>Готовность ТЗ</label>
+                                    <input type="date">
+                                </div>
+                                <div class="date-item">
+                                    <label>Готовность спецификации</label>
+                                    <input type="date">
+                                </div>
+                                <div class="date-item">
+                                    <label>Выбор подрядчика</label>
+                                    <input type="date">
+                                </div>
+                                <div class="date-item">
+                                    <label>Выдача оборудования</label>
+                                    <input type="date">
+                                </div>
+                                <div class="date-item">
+                                    <label>Готовность параметров</label>
+                                    <input type="date">
+                                </div>
+                                <div class="date-item">
+                                    <label>Готовность объекта</label>
+                                    <input type="date">
+                                </div>
+                                <div class="date-item">
+                                    <label>Интеграция</label>
+                                    <input type="date">
+                                </div>
+                                <div class="date-item">
+                                    <label>Приемка в мониторинг</label>
+                                    <input type="date">
+                                </div>
+                                <div class="date-item">
+                                    <label>Приемка в эксплуатацию</label>
+                                    <input type="date">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Добавляем обработчик для переключателя развертывания
+            const toggleSection = item.querySelector('.toggle-section');
+            const expandedContent = item.querySelector('.expanded-content');
+            
+            toggleSection.addEventListener('click', function() {
+                if (expandedContent.style.display === 'block') {
+                    expandedContent.style.display = 'none';
+                    this.innerHTML = arrowRightIcon;
+                } else {
+                    expandedContent.style.display = 'block';
+                    this.innerHTML = arrowDownIcon;
+                }
+            });
+            
+            return item;
+        }
+        
+        // Добавляем несколько элементов в список
+        const itemsContainer = document.getElementById('itemsContainer');
+        for (let i = 0; i < 3; i++) {
+            itemsContainer.appendChild(createItem());
+        }
+    </script>
+</body>
+</html>
