@@ -1,0 +1,2 @@
+id,packet,year,type_of_work,contractor,idleft,idright,g2,g3,g4,rrl,a_index,a_region,a_place,date_start,adr_prepare,tech_fin,equipment_fin,equipment_prepared,contractor_accepted,ready_for_work,params_fin,integration_fin,monitoring_fin,commisioning_fin,target
+1,1,2023,0.0,30.0,368838,188,0.0,0.0,1.0,0.0,365013,0.0,1.0,2025-06-10 15:06:22.655,2025-06-25 15:06:22.655,2025-07-17 15:06:22.655,2025-07-17 15:06:22.655,2025-07-17 15:06:22.655,,,,,,,
