@@ -35,7 +35,22 @@ for model in [model for model in os.listdir() if model.endswith('.pkl')]:
     if model[10:-4] in keys:
         xgb_models_best[model[10:-4]] = joblib.load(model)
 
-def predict_delta(csv_path):
+def convertDate(date = '2000-11-05 18:35:11.2'):
+    result = pd.Timestamp('1970-01-01')
+    try:
+        result = pd.to_datetime(date, format='%Y-%m-%d %H:%M:%S.%f')
+
+    except ValueError:
+
+            try:
+                result = pd.to_datetime(date, format='%Y-%m-%d %H:%M:%S')
+
+            except ValueError:
+                result = pd.to_datetime(date, format='%Y-%m-%d') + timedelta(seconds=1)
+
+    return result
+
+def predict_delta(df_origin):
     features = 12
     fields = ['year', 'type_of_work', 'contractor', 'idleft', 'idright', 
           '2g', '3g', '4g', 'rrl', 'a_index', 'a_region', 'a_place', #*weather, *contractor_weather, 
@@ -48,15 +63,13 @@ def predict_delta(csv_path):
     for idx, wea in enumerate(weather_fields):
         contractor_weather.append(f'cw{idx}')
     
-    df_origin = pd.read_csv(csv_path, index_col=0)
+    #df_origin = pd.read_csv(csv_path, index_col=0)
     df = df_origin.rename(columns={'g2': '2g', 'g3': '3g','g4': '4g'})
-    logger.info(df.columns)
     data_fields = ['date_start', 'adr_prepare', 'tech_fin', 'equipment_fin', 'equipment_prepared', 'contractor_accepted',
                    'ready_for_work', 'params_fin', 'integration_fin', 'monitoring_fin', 'commisioning_fin']
     
     for f in data_fields:
-        logger.info(f'butt {df[f]}')
-        df[f] = pd.to_datetime(df[f], format='%Y-%m-%d %H:%M:%S.%f')
+        df[f] = convertDate(df[f])
 
     df['delta_start'] = (df['adr_prepare'] - df['date_start'])/timedelta(days=1) #Время от добавления в систему до начала работ
     df['delta_tech'] = (df['tech_fin'] - df['adr_prepare'])/timedelta(days=1) #Время от начала работ до готовности технической части
@@ -91,50 +104,72 @@ def predict_delta(csv_path):
     
     df = df[actual_fields]
     result = len(actual_fields) - 1
-    logger.info(result)
+
+    #logger.info('look here')
+    #logger.info(result)
+    #logger.info(f'model {fields[result]}')
+    #logger.info(fields[:result + 1])
+    #logger.info(fields[:result  + 1] + weather[:result-features+1])
+    #logger.info(fields[:result  + 1] + weather[:result-features+1] + contractor_weather[:result-features+1])
+    #logger.info(df_leftout[:result  + 1].columns)
+    #logger.info(xgb_models_best)
     
     try:
-        X = df_leftout[:result  + 1]
+        X = df[:result  + 1]
         dtest = xgb.DMatrix(X)
         y_pred = xgb_models_best[fields[result]].predict(dtest)
     except ValueError:
         try:
-            X = df_leftout[fields[:result  + 1] + weather[:result-features+1]]
+            X = df[fields[:result  + 1] + weather[:result-features+1]]
             dtest = xgb.DMatrix(X)
             y_pred = xgb_models_best[fields[result]].predict(dtest)
         except ValueError:
-            X = df_leftout[fields[:result  + 1] + weather[:result-features+1] + contractor_weather[:result-features+1]]
+            X = df[fields[:result  + 1] + weather[:result-features+1] + contractor_weather[:result-features+1]]
             dtest = xgb.DMatrix(X)
             y_pred = xgb_models_best[fields[result]].predict(dtest)
-    #logger.info('look here')
-    #logger.info(y_pred)
+    
+    logger.info(y_pred)
+    logger.info('free')
     df_origin['delta_all'] = y_pred
-    #logger.info(df_origin.head())
-    df_origin['date_start'] = pd.to_datetime(df_origin['date_start'], format='%Y-%m-%d %H:%M:%S.%f')
+    df_origin['date_start'] = convertDate(df_origin['date_start'])
     df_origin['target'] = df_origin['date_start'] + pd.to_timedelta(df_origin['delta_all'], unit='D')
-    #logger.info(df_origin.head())
-    #logger.info(df_origin['target'])
-    #logger.info('here end')
-    return df_origin
+
+    return df_origin['target']
     
 def callback(ch, method, properties, body, *args, **kwargs):
     payload = json.loads(body)
-    file_name = payload['batch_file']
-    csv_file = base64.b64decode(payload['bytes'])
 
-    with open(file_name, 'wb') as f:
-        f.write(csv_file)
+    df_origin = pd.read_csv( StringIO(base64.b64decode(payload['bytes']).decode('utf-8') ))
+    logger.info('look here')
+    logger.info(df_origin.columns)
 
-    df = predict_delta(file_name)
-    os.remove(file_name)
+    deltas = []
+    for index, row in df_origin.iterrows():
+        # Создаем DataFrame из одной строки
+        row_df = pd.DataFrame([row])
+        delta = predict_delta(row_df)
+        deltas.append(delta)
+    logger.info('smooth')
+    logger.info(deltas)
+    logger.info('target before')
+    logger.info(df_origin['target'])
+    df_origin['target'] = deltas
+    logger.info('target after')
+    logger.info(df_origin['target'])
+    #df_origin['target'] = df_origin.apply(predict_delta, axis=1)
+    #df = predict_delta(df_origin)
+    #os.remove(file_name)
+    
+    
 
     result_item = {'task_id': '0', 'status': 'success'}
-    csv_buffer = StringIO()
-    df.to_csv(csv_buffer, index=False)  # index=False, чтобы не сохранять индексы
-    csv_string = csv_buffer.getvalue()
-    csv_bytes = csv_string.encode('utf-8')  # str → bytes
-    base64_bytes = base64.b64encode(csv_bytes)  # bytes → base64 bytes
-    result_item['result'] = base64_bytes.decode('ascii')
+    #csv_buffer = StringIO()
+    #df_origin.to_csv(csv_buffer, index=False)  # index=False, чтобы не сохранять индексы
+    #csv_string = csv_buffer.getvalue()
+    #csv_bytes = csv_string.encode('utf-8')  # str → bytes
+    #base64_bytes = base64.b64encode(csv_bytes)  # bytes → base64 bytes
+    #result_item['result'] = base64_bytes.decode('ascii')
+    result_item['result'] = df_origin[['id', 'target']].to_json(orient='records')
     json_data = json.dumps(result_item)
     logger.info(result_item['result'])
 

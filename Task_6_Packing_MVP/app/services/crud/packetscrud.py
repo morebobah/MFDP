@@ -1,13 +1,13 @@
-from models.works import Works
+from models.packet import Packet
 from sqlalchemy import select
+from sqlalchemy.orm import joinedload
 from sqlalchemy.exc import SQLAlchemyError
 from pydantic import BaseModel
 from services.crud.exceptions import InsufficientFunds
 from database.database import session_maker
 
-
-class WorksCRUD:
-    model = Works
+class PacketsCRUD:
+    model = Packet
     
     @classmethod
     def find_all(cls):
@@ -23,6 +23,17 @@ class WorksCRUD:
             query = select(cls.model).filter_by(**filter_dict).order_by(cls.model.id.desc())
             rows = session.execute(query)
             return rows.scalars().all()
+    
+    @classmethod
+    def find_several_with_joined(cls, filters: BaseModel):
+        filter_dict = filters.model_dump(exclude_unset=True)
+        with session_maker() as session:
+            query = (select(cls.model)
+                     .options(joinedload(cls.model.events))
+                     .filter_by(**filter_dict)
+                     .order_by(cls.model.id.desc()))
+            rows = session.execute(query)
+            return rows.unique().scalars().all()
         
     @classmethod
     def find_one_or_none(cls, filters: BaseModel):
@@ -45,6 +56,7 @@ class WorksCRUD:
             session.add(new_instance)
             try:
                 session.commit()
+                session.refresh(new_instance)
             except SQLAlchemyError as e:
                 session.rollback()
                 raise e

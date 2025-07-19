@@ -5,10 +5,11 @@ from services.auth.auth import AuthService
 from services.crud.usercrud import UsersCRUD
 from services.crud.eventscrud import EventsCRUD
 from schemas.user import SUserID, SUserInfo
-from schemas.events import SEvents, STarget
+from schemas.events import SEvents, STarget, SEventID
 from schemas.packet import SPacketID, SPacketComplete
 from services.rm.rm import RabbitMQSender
 from io import StringIO
+from datetime import datetime
 
 
 
@@ -21,13 +22,13 @@ def user_checker(user_id: int = Form(...)):
 
 
 @router.post("/predict", summary='Создать запрос на обработку пакета')
-def predictk(packet_id: SPacketID, user: SUserInfo = Depends(AuthService.get_current_user)):
+def predict(packet_id: SPacketID, user: SUserInfo = Depends(AuthService.get_current_user)):
    
    batch_item = {'batchid': packet_id.packet_id}
-   df = pd.DataFrame([{col.name: getattr(row, col.name) for col in row.__table__.columns} 
+   df = pd.DataFrame([{**{col.name: getattr(row, col.name) for col in row.__table__.columns}, **{'id': row.id}} 
                       for row in EventsCRUD.find_several(packet_id)])
-   #file_name = f'./files/{str(uuid.uuid4())}.csv'
-   #df.to_csv(file_name, index=False, encoding='utf-8')
+   print('Colimns')
+   print(df.columns)
    csv_buffer = StringIO()
    df.to_csv(csv_buffer, index=False)
    csv_string = csv_buffer.getvalue()
@@ -45,12 +46,13 @@ def predictk(packet_id: SPacketID, user: SUserInfo = Depends(AuthService.get_cur
 
 @router.patch("/task/complete", summary='Завершить ml задачу', include_in_schema=False)
 def complete(task: SPacketComplete):
-   decoded_bytes = base64.b64decode(task.result)  # base64 → bytes
-   csv_string = decoded_bytes.decode('utf-8')
-   df = pd.read_csv(StringIO(csv_string))
-   print('look here')
-   print(df.head())
-   for item in df.itertuples():
-      id = SPacketID(packet_id=item.Index)
-      target = STarget(target=item[-2])
+   data = json.loads(task.result)
+   #decoded_bytes = base64.b64decode(task.result)  # base64 → bytes
+   #csv_string = decoded_bytes.decode('utf-8')
+   #df = pd.read_csv(StringIO(csv_string))
+   #print('look here')
+   #print(data)
+   for item in data:
+      id = SEventID(id=item['id'])
+      target = STarget(target=datetime.fromtimestamp(item['target'][0] / 1000))
       EventsCRUD.update(id, target)

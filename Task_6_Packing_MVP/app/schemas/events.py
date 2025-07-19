@@ -34,3 +34,6 @@ class SEvents(BaseModel):
 
 class STarget(BaseModel):
     target: Optional[datetime] = Field(..., description="Целевая даата")
+
+class SEventID(BaseModel):
+    id: int = Field(..., description="Номер мероприятия")
