@@ -1,12 +1,13 @@
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import ForeignKey
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from database.database import Base, int_pk
 from datetime import datetime
 
-class Works(Base):
-    __tablename__ = 'works'
+class Event(Base):
+    __tablename__ = 'events'
 
     id: Mapped[int_pk]
-    packet: Mapped[int] = mapped_column(nullable=False)  # Номер пакета
+    packet_id: Mapped[int] = mapped_column(ForeignKey("packets.id"), nullable=False) # Номер пакета
     year: Mapped[int] = mapped_column(nullable=False)
     type_of_work: Mapped[float] = mapped_column(nullable=False) #Бинарный принзнак новый или существующий
     contractor: Mapped[float] = mapped_column(nullable=False)
@@ -31,6 +32,8 @@ class Works(Base):
     monitoring_fin: Mapped[datetime] = mapped_column(nullable=True)  # Дата и время мониторинга
     commisioning_fin: Mapped[datetime] = mapped_column(nullable=True)  # Дата и время окончания всех работ
     target: Mapped[datetime] = mapped_column(nullable=True)  # Дата и время окончания всех работ
+
+    packet: Mapped["Packet"] = relationship(back_populates="events")
 
     extend_existing = True
 

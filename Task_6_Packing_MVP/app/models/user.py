@@ -1,8 +1,6 @@
-from sqlalchemy import text
-from sqlalchemy import event
-from sqlalchemy.orm import Session, sessionmaker
-from sqlalchemy.orm import Mapped, mapped_column
-from database.database import Base, int_pk, str_uniq, float_zero, float_one, bool_val
+from sqlalchemy.orm import Mapped, relationship
+from database.database import Base, int_pk, str_uniq, bool_val
+
 
 class User(Base):
     __tablename__='users'
@@ -12,7 +10,9 @@ class User(Base):
     first_name: Mapped[str]
     last_name: Mapped[str]
     password: Mapped[str]
+    is_access: Mapped[bool_val]
     is_admin: Mapped[bool_val]
+    packets: Mapped[list["Packet"]] = relationship(back_populates="user") 
 
     extend_existing = True
 

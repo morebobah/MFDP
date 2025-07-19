@@ -18,8 +18,9 @@ def lifespan(app: FastAPI):
     
     user = SUser(first_name='User', 
                  last_name='Test', 
-                 email='User@Test.ru', 
+                 email='user@test.ru', 
                  password=AuthService.get_password_hash('testpwd'),
+                 is_access=True,
                  is_admin=False, 
                 )
     
@@ -31,9 +32,8 @@ def lifespan(app: FastAPI):
                  last_name='Superuser', 
                  email='admin@test.ru', 
                  password=AuthService.get_password_hash('testadminpwd'),
-                 is_admin=True, 
-                 balance=0.0,
-                 loyalty=1.0)
+                 is_access=True,
+                 is_admin=True)
     
     if UsersCRUD.find_one_or_none_by_email(SUserEmail(email=admin.email)) is None:
         UsersCRUD.add(admin)
@@ -50,7 +50,7 @@ app.include_router(home_router)
 app.include_router(auth_router)
 app.include_router(user_router)
 app.include_router(ml_router)
-app.include_router(admin_router)
+#app.include_router(admin_router)
 
 
 

@@ -5,6 +5,7 @@ from fastapi.responses import RedirectResponse
 from schemas.user import SUserAuth, SUserRegister, SUser, SUserID, SUserInfo
 from services.crud.usercrud import UsersCRUD
 from services.auth.auth import AuthService
+from services.crud.packetscrud import PacketsCRUD
 
 
 router = APIRouter(tags=['Личный кабинет'])
@@ -20,7 +21,7 @@ def home_page(request: Request):
     if token:
         try:
             user = AuthService.get_user_from_token(token)
-            panel = {'Пополнить баланс': ['Pay', 'fa-credit-card'], 
+            panel = {
                      'Выход': ['Out', 'fa-sign-out-alt']
                      }
             try:
@@ -39,70 +40,6 @@ def home_page(request: Request):
             user = None
     
     return RedirectResponse("/login")
-
-@router.get("/balance", summary='Пополнение баланса')
-def balance_page(request: Request):
-    token = request.cookies.get(settings.COOKIE_NAME)
-    if token:
-        try:
-            user = AuthService.get_user_from_token(token)
-            panel = {'Личный кабинет': ['ML', 'fa-brain ml-icon'], 
-                     'Выход': ['Out', 'fa-sign-out-alt']
-                     }
-            
-            try:
-                admin = AuthService.get_current_admin_user(token)
-                if admin:
-                    panel = dict({'Функции администратора': ['Adm', 'fa-tasks'],},
-                                 **panel)
-            except HTTPException as e:
-                pass
-                        
-            return templates.TemplateResponse(name='pay.html',
-                                              context={'request': request,
-                                                       'user': user,
-                                                       'panel': panel})
-        except HTTPException:
-            user = None
-    
-    return RedirectResponse("/login")
-
-
-
-@router.get("/admin", summary='Функции администратора!')
-def admin_account(request: Request):
-    token = request.cookies.get(settings.COOKIE_NAME)
-    if token:
-        try:
-            user = AuthService.get_user_from_token(token)
-            panel = {'Личный кабинет': ['ML', 'fa-brain ml-icon'],
-                     'Пополнить баланс': ['Pay', 'fa-credit-card'], 
-                     'Выход': ['Out', 'fa-sign-out-alt']
-                     }
-            
-            table = list()
-            for user_item in UsersCRUD.find_all_users():
-                table.append({'id': user_item.id,
-                               'email': user_item.email,
-                               'balance': user_item.balance,
-                               'loyalty': user_item.loyalty,
-                               'admin': user_item.is_admin})
-            
-            try:
-                admin = AuthService.get_current_admin_user(token)
-            except HTTPException as e:
-                RedirectResponse("/login")
-                        
-            return templates.TemplateResponse(name='adm.html',
-                                              context={'request': request,
-                                                       'user': user,
-                                                       'panel': panel, 
-                                                       'table': table})
-        except HTTPException:
-            user = None
-    
-    return RedirectResponse("/login")
-
 
 @router.get("/registration", summary='Регистрация личного кабинета!')
 def registration(request: Request):
