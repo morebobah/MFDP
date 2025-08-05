@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Response, HTTPException, status, Path, Depends, UploadFile, File, HTTPException
 from typing import Annotated, List
 from schemas.user import SUserAuth, SUserRegister, SUserInfo, SUserID
-from schemas.packet import SUserGetPack, SPacketName, SPacketAdd
+from schemas.packet import SUserGetPack, SPacketName, SPacketAdd, SPacketStatus
 from schemas.events import SEvents
 from services.auth.auth import AuthService
 from services.crud.usercrud import UsersCRUD
@@ -82,7 +82,7 @@ def addEvents(data: List[SEvents], user: SUserInfo = Depends(AuthService.get_cur
     
     return records_dict
 
-@router.post("user/event/upload/excel/")
+@router.post("/user/event/upload/excel/")
 async def uploadExcel(file: UploadFile = File(...), user: SUserInfo = Depends(AuthService.get_current_user)):
 
     if not file.filename.endswith(('.xlsx', '.xls')):

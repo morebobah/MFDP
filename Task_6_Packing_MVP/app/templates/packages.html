@@ -1,0 +1,281 @@
+<script>
+        // SVG для стрелки вправо (закрытое состояние)
+    const arrowRightIcon = `
+        <svg class="toggle-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+    `;
+    
+    // SVG для стрелки вниз (открытое состояние)
+    const arrowDownIcon = `
+        <svg class="toggle-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+    `;
+    function bindPackage(e){
+            const toggleSection = e.querySelector('.toggle-section');
+            const expandedContent = e.querySelector('.expanded-content');
+            
+            toggleSection.addEventListener('click', function() {
+                if (expandedContent.style.display === 'block') {
+                    expandedContent.style.display = 'none';
+                    this.innerHTML = arrowRightIcon;
+                } else {
+                    expandedContent.style.display = 'block';
+                    this.innerHTML = arrowDownIcon;
+                }
+            });
+        };
+
+    function toggleVisibility(elementId, iconElement) {
+        const element = document.getElementById(elementId);
+        
+        if (!element) {
+            console.error("Элемент не найден!");
+            return;
+        }
+
+        // Получаем текущее состояние
+        const isHidden = element.style.display === 'none' || 
+                        window.getComputedStyle(element).display === 'none';
+
+        if (isHidden) {
+            // Показываем блок
+            element.style.display = 'block';
+            iconElement.classList.remove('fa-arrow-right');
+            iconElement.classList.add('fa-arrow-down');
+        } else {
+            // Скрываем блок
+            element.style.display = 'none';
+            iconElement.classList.remove('fa-arrow-down');
+            iconElement.classList.add('fa-arrow-right');
+        }
+    }
+</script>
+
+{% for packet in packets %}
+    <div class="md:col-span-2 custom-border bg-white p-6 custom-shadow">
+        <h2 class="text-xl font-semibold text-gray-800 mb-4">Пакет объектов {{ packet.uname }}&nbsp;
+            <button class="nav-btn p-2 rounded-full hover:bg-blue-50 transition-colors" title="fa-sign-out-alt">
+                <i class="fas fa-arrow-right text-blue-600 text-xl" 
+                onclick='toggleVisibility("{{ packet.uname }}", this)'></i>
+            </button>
+            <button id="process-packages-btn{{ packet.uname }}" class="bg-green-600 hover:bg-green-700 text-white text-sm font-medium py-2 px-4 rounded transition-colors">
+                <i class="fas fa-play mr-1"></i>
+            </button>
+            <script>
+                document.getElementById('process-packages-btn{{ packet.uname }}').addEventListener('click', async function() {
+                    try {
+                        const response = await fetch('/ml/predict', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ packet_id: {{ packet.id }} })
+                        });
+
+                        if (response.ok) {
+                            window.location.reload();
+                        } else {
+                            console.error('Ошибка при обработке пакета:', response.statusText);
+                        }
+                    } catch (error) {
+                        console.error('Ошибка:', error);
+                    }
+                });
+            </script>
+            <i>&nbsp; {% if packet.status=='created' %}проект {{ packet.dt }} {% else %}обработан  {{ packet.dt }} {% endif %}</i>
+        </h2>
+        <div id="{{ packet.uname }}" style="display: none">
+            <br>
+            <div id="packages-container{{ packet.uname[:8] }}">
+                {% for evt in packet.events %}
+                <!--Начало объекта {{ evt.id }}-->
+                <div class="package" id="subobj{{ evt.id }}">
+                    <div class="package-header">
+                        <input type="text" class="package-title" placeholder="UUID пакета" style="color: white;" value="${generateUUID()}">
+                    </div>
+                    <div class="package-content">
+                        <div class="toggle-section">
+                            <svg class="toggle-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                            </svg>
+                        </div>
+                        
+                        <div class="main-controls">
+                            <div class="object-section">
+                                ОС: {{ evt.idleft }}
+                                <div class="left-right-section">
+                                Новый&nbsp;
+                                <div class="object-type-toggle">
+                                    <label class="switch">
+                                        <input type="checkbox" {% if not packet.type_of_work %}checked{% endif %}>
+                                        <span class="slider"></span>
+                                        <div class="switch-labels">
+                                            <span>Сущ.</span>
+                                            <span>Новый</span>
+                                        </div>
+                                    </label>
+                                </div>
+                                &nbsp;сущ.
+                                </div>
+                            </div>
+                            <div class="region-section">
+                                регион:&nbsp;{{ evt.a_region }}<br/>
+                                индекс:&nbsp;{{ evt.a_index }}
+                            </div>
+                            <div class="date-section">
+                                год:&nbsp;{{ evt.year }}<br />
+                                подрядчик:&nbsp;{{ evt.contractor }}
+                            </div>
+                            <div class="date-section">
+                            <div class="lr-sec">Старт&nbsp;проекта:&nbsp;<input type="date" value="{{ evt.date_start.strftime('%Y-%m-%d') }}"></div>
+                            <div class="lr-sec">Прогноз&nbsp;готовности:
+                                {% if evt.target is not none %}
+                                    <input type="date" value="{{ evt.target.strftime('%Y-%m-%d') }}" readonly style="background-color: greenyellow;">
+                                {% else %}
+                                    <input type="date" readonly>
+                                {% endif %}</div>
+                            </div>
+                            <div class="free-space"></div>
+                        </div>
+                        
+                        <div class="expanded-content">
+                            <div class="technologies">
+                                <h4>Технологии:</h4>
+                                <div class="checkbox-group">
+                                    <div class="checkbox-item">
+                                        <input type="checkbox" id="tech-2g" {% if evt.g2 %}checked{% endif %}> <label for="tech-2g">2G</label>
+                                    </div>
+                                    <div class="checkbox-item">
+                                        <input type="checkbox" id="tech-3g" {% if evt.g3 %}checked{% endif %}> <label for="tech-3g">3G</label>
+                                    </div>
+                                    <div class="checkbox-item">
+                                        <input type="checkbox" id="tech-4g" {% if evt.g4 %}checked{% endif %}> <label for="tech-4g">4G</label>
+                                    </div>
+                                    <div class="checkbox-item">
+                                        <input type="checkbox" id="tech-rrl" {% if evt.rrl %}checked{% endif %}> <label for="tech-rrl">RRL</label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="related-object">
+                                <h4>Связанный объект:</h4>
+                                {{ evt.idright }}
+                            </div>
+                            
+                            <div class="location-section">
+                                <h4>Размещение:</h4>
+                                <label class="switch">
+                                    <input type="checkbox" name="location" checked>
+                                    <span class="slider"></span>
+                                    <div class="switch-labels">
+                                        <span>Город</span>
+                                        <span>За городом</span>
+                                    </div>
+                                </label>
+                            </div>
+                            
+                            <div class="place-section">
+                                <h4>Место:</h4>
+                                    {{ evt.a_place }}
+                            </div>
+                            
+                            <div class="dates-section">
+                                <h4>Даты:</h4>
+                                <div class="dates-grid">
+                                    <div class="date-item" >
+                                        <label>Готовность адреса</label>
+                                        {% if evt.adr_prepare is not none %}
+                                            <input type="date" id="adr_prepare{{ evt.id }}" name="adr_prepare{{ evt.id }}" value="{{ evt.adr_prepare.strftime('%Y-%m-%d') }}">
+                                        {% else %}
+                                            <input type="date" id="adr_prepare{{ evt.id }}" name="adr_prepare{{ evt.id }}">
+                                        {% endif %}
+                                    </div>
+                                    <div class="date-item" >
+                                        <label>Готовность ТЗ</label>
+                                        {% if evt.tech_fin is not none %}
+                                            <input type="date" id="tech_fin{{ evt.id }}" name="tech_fin{{ evt.id }}" value="{{ evt.tech_fin.strftime('%Y-%m-%d') }}">
+                                        {% else %}
+                                            <input type="date" id="tech_fin{{ evt.id }}" name="tech_fin{{ evt.id }}">
+                                        {% endif %}
+                                    </div>
+                                    <div class="date-item" >
+                                        <label>Готовность спецификации</label>
+                                        {% if evt.equipment_fin is not none %}
+                                            <input type="date" id="equipment_fin{{ evt.id }}" name="equipment_fin{{ evt.id }}" value="{{ evt.equipment_fin.strftime('%Y-%m-%d') }}">
+                                        {% else %}
+                                            <input type="date" id="equipment_fin{{ evt.id }}" name="equipment_fin{{ evt.id }}">
+                                        {% endif %}
+                                    </div>
+                                    <div class="date-item" >
+                                        <label>Выбор подрядчика</label>
+                                        {% if evt.contractor_accepted is not none %}
+                                            <input type="date" id="contractor_accepted{{ evt.id }}" name="contractor_accepted{{ evt.id }}" value="{{ evt.contractor_accepted.strftime('%Y-%m-%d') }}">
+                                        {% else %}
+                                            <input type="date" id="contractor_accepted{{ evt.id }}" name="contractor_accepted{{ evt.id }}">
+                                        {% endif %}
+                                    </div>
+                                    <div class="date-item" >
+                                        <label>Выдача оборудования</label>
+                                        {% if evt.equipment_prepared is not none %}
+                                            <input type="date" id="equipment_prepared{{ evt.id }}" name="equipment_prepared{{ evt.id }}" value="{{ evt.equipment_prepared.strftime('%Y-%m-%d') }}">
+                                        {% else %}
+                                            <input type="date" id="equipment_prepared{{ evt.id }}" name="equipment_prepared{{ evt.id }}">
+                                        {% endif %}
+                                    </div>
+                                    <div class="date-item" >
+                                        <label>Готовность объекта</label>
+                                        {% if evt.ready_for_work is not none %}
+                                            <input type="date" id="ready_for_work{{ evt.id }}" name="ready_for_work{{ evt.id }}" value="{{ evt.ready_for_work.strftime('%Y-%m-%d') }}">
+                                        {% else %}
+                                            <input type="date" id="ready_for_work{{ evt.id }}" name="ready_for_work{{ evt.id }}">
+                                        {% endif %}
+                                    </div>
+                                    <div class="date-item" >
+                                        <label>Готовность параметров</label>
+                                        {% if evt.params_fin is not none %}
+                                            <input type="date" id="params_fin{{ evt.id }}" name="params_fin{{ evt.id }}" value="{{ evt.params_fin.strftime('%Y-%m-%d') }}">
+                                        {% else %}
+                                            <input type="date" id="params_fin{{ evt.id }}" name="params_fin{{ evt.id }}">
+                                        {% endif %}
+                                    </div>
+                                    <div class="date-item" >
+                                        <label>Интеграция</label>
+                                        {% if evt.integration_fin is not none %}
+                                            <input type="date" id="integration_fin{{ evt.id }}" name="integration_fin{{ evt.id }}" value="{{ evt.integration_fin.strftime('%Y-%m-%d') }}">
+                                        {% else %}
+                                            <input type="date" id="integration_fin{{ evt.id }}" name="integration_fin{{ evt.id }}">
+                                        {% endif %}
+                                    </div>
+                                    <div class="date-item" >
+                                        <label>Приемка в мониторинг</label>
+                                        {% if evt.monitoring_fin is not none %}
+                                            <input type="date" id="monitoring_fin{{ evt.id }}" name="monitoring_fin{{ evt.id }}" value="{{ evt.monitoring_fin.strftime('%Y-%m-%d') }}">
+                                        {% else %}
+                                            <input type="date" id="monitoring_fin{{ evt.id }}" name="monitoring_fin{{ evt.id }}">
+                                        {% endif %}
+                                    </div>
+                                    <div class="date-item" >
+                                        <label>Приемка в эксплуатацию</label>
+                                        {% if evt.commisioning_fin is not none %}
+                                            <input type="date" id="commisioning_fin{{ evt.id }}" name="commisioning_fin{{ evt.id }}" value="{{ evt.commisioning_fin.strftime('%Y-%m-%d') }}">
+                                        {% else %}
+                                            <input type="date" id="commisioning_fin{{ evt.id }}" name="commisioning_fin{{ evt.id }}">
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <script>
+                        const e{{ evt.id }} = document.getElementById("subobj{{ evt.id }}")
+                        bindPackage(e{{ evt.id }})
+                    </script>
+                </div>
+                <!--Конец объекта {{ evt.id }}-->
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+{% endfor %}

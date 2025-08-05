@@ -28,6 +28,7 @@ channel.queue_declare(queue=queue_name)
 
 
 url = 'https://raw.githubusercontent.com/morebobah/MFDP/refs/heads/main/Task_5_Improving_The_Model/best_params.csv'
+url = 'best_params.csv'
 df_params = pd.read_csv(url, index_col=0)
 xgb_models_best = {idx: None for idx in df_params.index}
 keys = xgb_models_best.keys()

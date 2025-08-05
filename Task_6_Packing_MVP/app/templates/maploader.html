@@ -1,0 +1,158 @@
+        <div class="custom-border bg-white p-6 custom-shadow">
+            <div class="map-container">
+                <div id="map"></div>
+                <div class="map-controls">
+                    <button id="clearMarkers">Очистить метки</button>
+                    <div class="coordinates-info" id="coordinates">Кликните на карту, чтобы поставить метку</div>
+                </div>
+            </div>
+        </div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    function setupSwitchButtons() {
+        const buttons = document.querySelectorAll('button[switch]');
+        buttons.forEach(button => {
+            button.addEventListener('click', function() {
+                const switchValue = this.getAttribute('switch');
+                console.log(switchValue);
+                const form = document.getElementById('ml-form');
+                if (form) {
+                    form.submit();
+                }
+            });
+        });
+    }
+    // Инициализация при загрузке страницы
+    document.addEventListener('DOMContentLoaded', function() {
+        const packagesContainer = document.getElementById('packages-container');
+        
+        // Инициализация карты
+        const map = L.map('map');//.setView([55.751244, 37.618423], 10); // Москва по умолчанию
+        map.setView([33.751244, 47.618423], 10);
+
+        // Добавляем спутниковые тайлы от MapTiler
+        const satelliteLayer = L.tileLayer('https://api.maptiler.com/maps/hybrid/{z}/{x}/{y}.jpg?key=nqjJGUVTGskXZsnIGmaJ', {
+            attribution: '<a href="https://www.maptiler.com/copyright/" target="_blank">© MapTiler</a> <a href="https://www.openstreetmap.org/copyright" target="_blank">© OpenStreetMap contributors</a>'
+        }).addTo(map);
+
+        // Создаем слой для маркеров
+        const markersLayer = L.layerGroup().addTo(map);
+        
+        // Массив для хранения координат маркеров
+        const markersCoordinates = [];
+
+        // Обработчик клика по карте
+        map.on('click', function(e) {
+            // Создаем стандартный маркер
+            const marker = L.marker(e.latlng, {
+                draggable: true,
+                icon: L.icon({
+                    iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
+                    iconSize: [25, 41],
+                    iconAnchor: [12, 41],
+                    popupAnchor: [1, -34]
+                })
+            }).addTo(markersLayer);
+            
+            // Добавляем всплывающее окно с координатами
+            marker.bindPopup(`Координаты: ${e.latlng.lat.toFixed(6)}, ${e.latlng.lng.toFixed(6)}`).openPopup();
+            
+            // Добавляем координаты в массив
+            markersCoordinates.push(e.latlng);
+            
+            // Обновляем отображение координат
+            updateCoordinatesDisplay();
+            
+            // Добавляем новый пакет данных
+            const newPackage = createPackage2(e.latlng);
+            //const newPackage = createPackage();
+            packagesContainer.appendChild(newPackage);
+            
+            // Прокручиваем к новому пакету
+            newPackage.scrollIntoView({ behavior: 'smooth' });
+            
+            // Обработчик перемещения маркера
+            marker.on('dragend', function(e) {
+                const marker = e.target;
+                const position = marker.getLatLng();
+                marker.setPopupContent(`Координаты: ${position.lat.toFixed(6)}, ${position.lng.toFixed(6)}`);
+                
+                // Обновляем координаты в массиве
+                const index = markersCoordinates.findIndex(coord => 
+                    coord.lat === e.oldLatLng.lat && coord.lng === e.oldLatLng.lng);
+                if (index !== -1) {
+                    markersCoordinates[index] = position;
+                }
+                
+                updateCoordinatesDisplay();
+            });
+        });
+
+        // Функция обновления отображения координат
+        function updateCoordinatesDisplay() {
+            const coordsDiv = document.getElementById('coordinates');
+            if (markersCoordinates.length === 0) {
+                coordsDiv.innerHTML = 'Кликните на карту, чтобы поставить метку';
+            } else {
+                let html = '<strong>Координаты меток:</strong><br>';
+                markersCoordinates.forEach((coord, index) => {
+                    html += `${index + 1}. Широта: ${coord.lat.toFixed(6)}, Долгота: ${coord.lng.toFixed(6)}<br>`;
+                });
+                coordsDiv.innerHTML = html;
+            }
+        }
+
+        // Очистка всех маркеров
+        document.getElementById('clearMarkers').addEventListener('click', function() {
+            markersLayer.clearLayers();
+            markersCoordinates.length = 0;
+            updateCoordinatesDisplay();
+            
+            // Очищаем все пакеты данных
+            packagesContainer.innerHTML = '';
+        });
+
+        // Добавляем два начальных пакета
+        //packagesContainer.appendChild(createPackage());
+        //packagesContainer.appendChild(createPackage());
+        
+        // Обработчик для кнопки добавления пакета
+        document.getElementById('add-package-btn').addEventListener('click', function() {
+            packagesContainer.appendChild(createPackage());
+        });
+        
+        // Обработчик для загрузки файла
+        const dropzone = document.getElementById('dropzone-file');
+        const fileNameElement = document.getElementById('file-name');
+        const fileSizeElement = document.getElementById('file-size');
+
+        dropzone.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                // Отображаем имя файла
+                fileNameElement.textContent = file.name;
+                
+                // Отображаем размер файла
+                const fileSize = file.size;
+                let sizeText;
+                if(fileSize < 1024) {
+                    sizeText = fileSize + ' байт';
+                } else if(fileSize < 1024 * 1024) {
+                    sizeText = (fileSize / 1024).toFixed(1) + ' KB';
+                } else {
+                    sizeText = (fileSize / (1024 * 1024)).toFixed(1) + ' MB';
+                }
+                fileSizeElement.textContent = sizeText;
+                
+                // Показываем контейнер с информацией
+                previewContainer.classList.remove('hidden');
+            }
+        });
+        
+        // Обработчик для отправки формы
+        const submitBTN = document.getElementById('submit-btn');
+
+        
+    });
+    document.addEventListener('DOMContentLoaded', setupSwitchButtons);
+</script>

@@ -3,6 +3,7 @@ from fastapi.templating import Jinja2Templates
 from database.config import get_settings
 from fastapi.responses import RedirectResponse
 from schemas.user import SUserAuth, SUserRegister, SUser, SUserID, SUserInfo
+from schemas.packet import SUserGetPack, SPacketName, SPacketAdd
 from services.crud.usercrud import UsersCRUD
 from services.auth.auth import AuthService
 from services.crud.packetscrud import PacketsCRUD
@@ -31,11 +32,21 @@ def home_page(request: Request):
                                 **panel)
             except HTTPException as e:
                 pass
-                
+            user_id = SUserGetPack(user_id = user.id)
+            packets = PacketsCRUD.find_several_with_joined(user_id)
+            result = [{'id': itm.id, 
+                    'user_id': itm.user_id, 
+                    'uname': itm.uname, 
+                    'aname': itm.aname,
+                    'status': itm.status,
+                    'dt': itm.updt,
+                    'events': [{c.name: getattr(e, c.name) for c in e.__table__.columns} for e in itm.events]
+                    } for itm in packets]
             return templates.TemplateResponse(name='home.html',
                                               context={'request': request,
                                                        'user': user,
-                                                       'panel': panel})
+                                                       'panel': panel,
+                                                       'packets': result})
         except HTTPException:
             user = None
     

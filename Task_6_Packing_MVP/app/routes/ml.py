@@ -4,9 +4,10 @@ from typing import Annotated, List
 from services.auth.auth import AuthService
 from services.crud.usercrud import UsersCRUD
 from services.crud.eventscrud import EventsCRUD
+from services.crud.packetscrud import PacketsCRUD
 from schemas.user import SUserID, SUserInfo
 from schemas.events import SEvents, STarget, SEventID
-from schemas.packet import SPacketID, SPacketComplete
+from schemas.packet import SPacketID, SPacketComplete, SPacketStatus, SPacketPKID
 from services.rm.rm import RabbitMQSender
 from io import StringIO
 from datetime import datetime
@@ -40,6 +41,9 @@ def predict(packet_id: SPacketID, user: SUserInfo = Depends(AuthService.get_curr
 
    with RabbitMQSender("ml_task_queue") as sender:
       print(sender.send_task(json.dumps(batch_item)))
+
+   PacketsCRUD.update(SPacketPKID(id=packet_id.packet_id), SPacketStatus(status='pending'))
+   
 
    return {"status": "success"}
 

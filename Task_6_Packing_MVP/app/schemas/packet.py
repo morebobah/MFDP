@@ -19,3 +19,10 @@ class SPacketComplete(BaseModel):
     task_id: str  # или int, если ID числовой
     status: str  # например, "success" или "failed"
     result: Optional[str] = None  # результат в base64 или другом формате
+
+class SPacketStatus(BaseModel):
+    status: str
+
+
+class SPacketPKID(BaseModel):
+    id: int = Field(..., description="Идентификатор пакета")

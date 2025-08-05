@@ -1,5 +1,6 @@
 import uuid
-from sqlalchemy import ForeignKey
+from datetime import datetime
+from sqlalchemy import ForeignKey, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from database.database import Base, int_pk, str_uniq, float_zero, float_one, bool_val
 
@@ -11,6 +12,11 @@ class Packet(Base):
     uname: Mapped[str] = mapped_column(unique=True, default=lambda: str(uuid.uuid4()))
     aname: Mapped[str]
     status: Mapped[str] = mapped_column(default="created")
+    updt: Mapped[datetime] = mapped_column(
+        server_default=func.now(), 
+        onupdate=func.now(),
+        nullable=False
+    )
 
     user: Mapped["User"] = relationship(back_populates="packets")
     events: Mapped[list["Event"]] = relationship(back_populates="packet")

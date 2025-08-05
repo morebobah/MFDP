@@ -63,13 +63,14 @@ class PacketsCRUD:
         return new_instance
     
     @classmethod
-    def update(cls, id: BaseModel, target: BaseModel):
+    def update(cls, id: BaseModel, status: BaseModel):
+        filter_dict = id.model_dump(exclude_unset=True)
         with session_maker() as session:
             try:
-                query = select(cls.model).filter_by(id = 1)
+                query = select(cls.model).filter_by(**filter_dict)
                 result = session.execute(query)
                 record = result.scalar_one_or_none()
-                record.target = target.target               
+                record.status = status.status               
                 session.commit()
                 session.refresh(record)
                 return record
