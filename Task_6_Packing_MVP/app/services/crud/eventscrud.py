@@ -65,3 +65,30 @@ class EventsCRUD:
                 return record
             except SQLAlchemyError as e:
                 raise
+
+
+    @classmethod
+    def updateSeveral(cls, id: BaseModel, update_data: BaseModel):
+        filter_dict = id.model_dump(exclude_unset=True)
+        update_dict = update_data.model_dump(exclude_unset=True)
+        
+        with session_maker() as session:
+            try:
+                query = select(cls.model).filter_by(**filter_dict)
+                result = session.execute(query)
+                record = result.scalar_one_or_none()
+                
+                if record is None:
+                    raise ValueError("Record not found")
+                
+                # Обновляем все поля из update_data
+                for field, value in update_dict.items():
+                    if field != 'id':
+                        setattr(record, field, value)
+                    
+                session.commit()
+                session.refresh(record)
+                return record
+            except SQLAlchemyError as e:
+                session.rollback()
+                raise

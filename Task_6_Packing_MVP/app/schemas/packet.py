@@ -16,6 +16,7 @@ class SPacketAdd(BaseModel):
     aname: str = Field(default="")
 
 class SPacketComplete(BaseModel):
+    #batchid: str # или int, если ID числовой
     task_id: str  # или int, если ID числовой
     status: str  # например, "success" или "failed"
     result: Optional[str] = None  # результат в base64 или другом формате

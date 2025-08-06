@@ -1,14 +1,24 @@
 from fastapi import APIRouter, Response, HTTPException, status, Path, Depends, UploadFile, File, HTTPException
 from typing import Annotated, List
 from schemas.user import SUserAuth, SUserRegister, SUserInfo, SUserID
-from schemas.packet import SUserGetPack, SPacketName, SPacketAdd, SPacketStatus
-from schemas.events import SEvents
+from schemas.packet import SUserGetPack, SPacketName, SPacketAdd, SPacketStatus, SPacketPKID
+from schemas.events import SEvents, SEventsUPD, SEventID
 from services.auth.auth import AuthService
 from services.crud.usercrud import UsersCRUD
 from services.crud.packetscrud import PacketsCRUD
 from services.crud.eventscrud import EventsCRUD
 from io import BytesIO, StringIO
-import pandas as pd
+import pandas as pd, logging
+
+
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+) 
+
+logger = logging.getLogger(__name__) 
+
+
 
 router = APIRouter(prefix='/users', tags=['Функции пользователя'])
 
@@ -50,6 +60,16 @@ def getEvents(user: SUserInfo = Depends(AuthService.get_current_user)) -> list:
     
     return result
 
+@router.get('/user/packet', summary='Статус обработки пакета')
+def getStatus(packet_id: int, user: SUserInfo = Depends(AuthService.get_current_user)) -> dict:
+    
+    packet = PacketsCRUD.find_one_or_none(SPacketPKID(id=packet_id))
+
+    if not packet:
+        raise HTTPException(status_code=404, detail="Packet not found")
+    
+    return {'status': packet.status, 'data': packet.updt}
+
 @router.post('/user/packet/add', summary='Добавить новый пакет')
 def addPacket(data: SPacketName,user: SUserInfo = Depends(AuthService.get_current_user)) -> dict:
     item = SPacketAdd(user_id = user.id, aname=data.aname)
@@ -76,6 +96,18 @@ def addEvents(data: List[SEvents], user: SUserInfo = Depends(AuthService.get_cur
 
     for itm in data:
         event = EventsCRUD.add(itm)
+    
+        if event:
+            records_dict.append({c.name: getattr(event, c.name) for c in event.__table__.columns})
+    
+    return records_dict
+
+@router.post('/user/event/batch/update', summary='Изменить несколько мероприятий')
+def updEvents(data: List[SEventsUPD], user: SUserInfo = Depends(AuthService.get_current_user)) -> list:
+    records_dict = []
+
+    for itm in data:
+        event = EventsCRUD.updateSeveral(SEventID(id=itm.id), itm)
     
         if event:
             records_dict.append({c.name: getattr(event, c.name) for c in event.__table__.columns})

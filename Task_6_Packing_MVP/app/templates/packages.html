@@ -51,6 +51,76 @@
             iconElement.classList.add('fa-arrow-right');
         }
     }
+
+    async function collectAndSendEventsData(packetUname) {
+        // Находим контейнер с пакетами
+        const packagesContainer = document.getElementById(`packages-container${packetUname.slice(0, 8)}`);
+        
+        if (!packagesContainer) {
+            console.error('Packages container not found');
+            return;
+        }
+
+        // Собираем все элементы package
+        const packageElements = packagesContainer.querySelectorAll('.package');
+        const eventsData = [];
+
+        packageElements.forEach(packageEl => {
+            // Получаем ID мероприятия
+            const eventIdInput = packageEl.querySelector('input[name="event_id"]');
+            if (!eventIdInput) return;
+            
+            const eventId = parseInt(eventIdInput.value);
+            if (!eventId) return;
+
+            // Собираем только необходимые данные по датам
+            const eventData = {
+                id: eventId,
+                date_start: packageEl.querySelector(`input[name="date_start${eventId}"]`)?.value || null,
+                adr_prepare: packageEl.querySelector(`input[name="adr_prepare${eventId}"]`)?.value || null,
+                tech_fin: packageEl.querySelector(`input[name="tech_fin${eventId}"]`)?.value || null,
+                equipment_fin: packageEl.querySelector(`input[name="equipment_fin${eventId}"]`)?.value || null,
+                equipment_prepared: packageEl.querySelector(`input[name="equipment_prepared${eventId}"]`)?.value || null,
+                contractor_accepted: packageEl.querySelector(`input[name="contractor_accepted${eventId}"]`)?.value || null,
+                ready_for_work: packageEl.querySelector(`input[name="ready_for_work${eventId}"]`)?.value || null,
+                params_fin: packageEl.querySelector(`input[name="params_fin${eventId}"]`)?.value || null,
+                integration_fin: packageEl.querySelector(`input[name="integration_fin${eventId}"]`)?.value || null,
+                monitoring_fin: packageEl.querySelector(`input[name="monitoring_fin${eventId}"]`)?.value || null,
+                commisioning_fin: packageEl.querySelector(`input[name="commisioning_fin${eventId}"]`)?.value || null
+            };
+
+            // Преобразуем пустые строки в null
+            for (const key in eventData) {
+                if (eventData[key] === '') {
+                    eventData[key] = null;
+                }
+            }
+
+            eventsData.push(eventData);
+        });
+
+        try {
+            // Отправляем данные на сервер
+            const response = await fetch('/users/user/event/batch/update', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(eventsData)
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            console.log('Data successfully updated:', result);
+            return result;
+        } catch (error) {
+            console.error('Error updating events:', error);
+            throw error;
+        }
+    }
 </script>
 
 {% for packet in packets %}
@@ -61,11 +131,59 @@
                 onclick='toggleVisibility("{{ packet.uname }}", this)'></i>
             </button>
             <button id="process-packages-btn{{ packet.uname }}" class="bg-green-600 hover:bg-green-700 text-white text-sm font-medium py-2 px-4 rounded transition-colors">
-                <i class="fas fa-play mr-1"></i>
+                <i class="fas fa-play mr-1" id="icon{{ packet.uname }}"></i>
             </button>
             <script>
                 document.getElementById('process-packages-btn{{ packet.uname }}').addEventListener('click', async function() {
+                    await collectAndSendEventsData('{{ packet.uname }}');
+                    const btn = this;
+                    const icon = document.getElementById('icon{{ packet.uname }}');
+                    const originalIconClass = icon.className;
+                    
+                    // Функция для экспоненциальной задержки
+                    const delay = (retryCount) => {
+                        const baseDelay = 1000; // 1 секунда базовая задержка
+                        const maxDelay = 30000; // 30 секунд максимальная задержка
+                        return Math.min(baseDelay * Math.pow(2, retryCount), maxDelay);
+                    };
+
+                    // Функция проверки статуса
+                    const checkStatus = async (packetId, retryCount = 0) => {
+                        try {
+                            collectAndSendEventsData('{{ packet.uname }}')
+                            .then(() => console.log('Update successful'))
+                            .catch(err => console.error('Update failed:', err));
+                            
+                            const statusResponse = await fetch(`/users/user/packet?packet_id=${packetId}`);
+                            if (!statusResponse.ok) throw new Error('Status check failed');
+                            
+                            const data = await statusResponse.json();
+                            
+                            if (data.status === 'processed') {
+                                // Обработка завершена успешно
+                                //icon.className = originalIconClass;
+                                //btn.disabled = false;
+                                window.location.reload();
+                                return true;
+                            } else {
+                                // Продолжаем опрос с экспоненциальной задержкой
+                                const waitTime = delay(retryCount);
+                                await new Promise(resolve => setTimeout(resolve, waitTime));
+                                return checkStatus(packetId, retryCount + 1);
+                            }
+                        } catch (error) {
+                            console.error('Ошибка при проверке статуса:', error);
+                            const waitTime = delay(retryCount);
+                            await new Promise(resolve => setTimeout(resolve, waitTime));
+                            return checkStatus(packetId, retryCount + 1);
+                        }
+                    };
+
                     try {
+                        // Меняем иконку на спиннер и делаем кнопку неактивной
+                        icon.className = 'fas fa-spinner fa-spin mr-1';
+                        btn.disabled = true;
+                        
                         const response = await fetch('/ml/predict', {
                             method: 'POST',
                             headers: {
@@ -75,16 +193,29 @@
                         });
 
                         if (response.ok) {
-                            window.location.reload();
+                            // Запускаем проверку статуса
+                            await checkStatus({{ packet.id }});
                         } else {
                             console.error('Ошибка при обработке пакета:', response.statusText);
+                            icon.className = originalIconClass;
+                            btn.disabled = false;
                         }
                     } catch (error) {
                         console.error('Ошибка:', error);
+                        icon.className = originalIconClass;
+                        btn.disabled = false;
                     }
                 });
             </script>
-            <i>&nbsp; {% if packet.status=='created' %}проект {{ packet.dt }} {% else %}обработан  {{ packet.dt }} {% endif %}</i>
+            <i>&nbsp; 
+            {% if packet.status == 'created' %}
+                проект
+            {% elif packet.status == 'pending' %}
+                обрабатывается
+            {% else %}
+                обработан {{ packet.dt }}
+            {% endif %}
+            </i>
         </h2>
         <div id="{{ packet.uname }}" style="display: none">
             <br>
@@ -129,7 +260,8 @@
                                 подрядчик:&nbsp;{{ evt.contractor }}
                             </div>
                             <div class="date-section">
-                            <div class="lr-sec">Старт&nbsp;проекта:&nbsp;<input type="date" value="{{ evt.date_start.strftime('%Y-%m-%d') }}"></div>
+                            <input type="hidden" name="event_id" value = "{{ evt.id }}">
+                            <div class="lr-sec">Старт&nbsp;проекта:&nbsp;<input type="date" name="date_start{{ evt.id }}" value="{{ evt.date_start.strftime('%Y-%m-%d') }}"></div>
                             <div class="lr-sec">Прогноз&nbsp;готовности:
                                 {% if evt.target is not none %}
                                     <input type="date" value="{{ evt.target.strftime('%Y-%m-%d') }}" readonly style="background-color: greenyellow;">

@@ -1,4 +1,4 @@
-import uuid, base64, json, pandas as pd, base64
+import uuid, base64, json, pandas as pd, base64, logging
 from fastapi import APIRouter, Response, HTTPException, status, File, Path, Form, Depends
 from typing import Annotated, List
 from services.auth.auth import AuthService
@@ -12,7 +12,12 @@ from services.rm.rm import RabbitMQSender
 from io import StringIO
 from datetime import datetime
 
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+) 
 
+logger = logging.getLogger(__name__) 
 
 
 
@@ -28,19 +33,16 @@ def predict(packet_id: SPacketID, user: SUserInfo = Depends(AuthService.get_curr
    batch_item = {'batchid': packet_id.packet_id}
    df = pd.DataFrame([{**{col.name: getattr(row, col.name) for col in row.__table__.columns}, **{'id': row.id}} 
                       for row in EventsCRUD.find_several(packet_id)])
-   print('Colimns')
-   print(df.columns)
+
    csv_buffer = StringIO()
    df.to_csv(csv_buffer, index=False)
    csv_string = csv_buffer.getvalue()
    csv_bytes = csv_string.encode('utf-8')
    batch_item['bytes'] = base64.b64encode(csv_bytes).decode('ascii')
-   #with open(file_name, 'rb') as f:
-   #   csv = f.read()
-   print(batch_item)
+
 
    with RabbitMQSender("ml_task_queue") as sender:
-      print(sender.send_task(json.dumps(batch_item)))
+      logger.info(sender.send_task(json.dumps(batch_item)))
 
    PacketsCRUD.update(SPacketPKID(id=packet_id.packet_id), SPacketStatus(status='pending'))
    
@@ -50,13 +52,11 @@ def predict(packet_id: SPacketID, user: SUserInfo = Depends(AuthService.get_curr
 
 @router.patch("/task/complete", summary='Завершить ml задачу', include_in_schema=False)
 def complete(task: SPacketComplete):
+   task_id = task.task_id
    data = json.loads(task.result)
-   #decoded_bytes = base64.b64decode(task.result)  # base64 → bytes
-   #csv_string = decoded_bytes.decode('utf-8')
-   #df = pd.read_csv(StringIO(csv_string))
-   #print('look here')
-   #print(data)
    for item in data:
       id = SEventID(id=item['id'])
       target = STarget(target=datetime.fromtimestamp(item['target'][0] / 1000))
       EventsCRUD.update(id, target)
+
+   PacketsCRUD.update(SPacketPKID(id=task_id), SPacketStatus(status='processed'))

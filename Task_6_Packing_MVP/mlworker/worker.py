@@ -28,7 +28,7 @@ channel.queue_declare(queue=queue_name)
 
 
 url = 'https://raw.githubusercontent.com/morebobah/MFDP/refs/heads/main/Task_5_Improving_The_Model/best_params.csv'
-url = 'best_params.csv'
+#url = 'best_params.csv'
 df_params = pd.read_csv(url, index_col=0)
 xgb_models_best = {idx: None for idx in df_params.index}
 keys = xgb_models_best.keys()
@@ -106,31 +106,31 @@ def predict_delta(df_origin):
     df = df[actual_fields]
     result = len(actual_fields) - 1
 
-    #logger.info('look here')
-    #logger.info(result)
-    #logger.info(f'model {fields[result]}')
-    #logger.info(fields[:result + 1])
-    #logger.info(fields[:result  + 1] + weather[:result-features+1])
-    #logger.info(fields[:result  + 1] + weather[:result-features+1] + contractor_weather[:result-features+1])
-    #logger.info(df_leftout[:result  + 1].columns)
-    #logger.info(xgb_models_best)
     
     try:
-        X = df[:result  + 1]
+        X = df_leftout[fields[:result  + 1]]
         dtest = xgb.DMatrix(X)
         y_pred = xgb_models_best[fields[result]].predict(dtest)
-    except ValueError:
+    except ValueError as e:
+        logger.error(e)
         try:
-            X = df[fields[:result  + 1] + weather[:result-features+1]]
+            logger.info('duo start')
+            logger.info(fields[:result  + 1])
+            logger.info(result)
+            logger.info(fields[result])
+            logger.info(xgb_models_best.keys())
+            X = df_leftout[fields[:result  + 1] + weather[:result-features+1]]
             dtest = xgb.DMatrix(X)
             y_pred = xgb_models_best[fields[result]].predict(dtest)
-        except ValueError:
-            X = df[fields[:result  + 1] + weather[:result-features+1] + contractor_weather[:result-features+1]]
+            logger.info('duo end')
+        except ValueError as e:
+            logger.error(e)
+            logger.info('trio start')
+            X = df_leftout[fields[:result  + 1] + weather[:result-features+1] + contractor_weather[:result-features+1]]
             dtest = xgb.DMatrix(X)
             y_pred = xgb_models_best[fields[result]].predict(dtest)
+            logger.info('trio end')
     
-    logger.info(y_pred)
-    logger.info('free')
     df_origin['delta_all'] = y_pred
     df_origin['date_start'] = convertDate(df_origin['date_start'])
     df_origin['target'] = df_origin['date_start'] + pd.to_timedelta(df_origin['delta_all'], unit='D')
@@ -141,8 +141,6 @@ def callback(ch, method, properties, body, *args, **kwargs):
     payload = json.loads(body)
 
     df_origin = pd.read_csv( StringIO(base64.b64decode(payload['bytes']).decode('utf-8') ))
-    logger.info('look here')
-    logger.info(df_origin.columns)
 
     deltas = []
     for index, row in df_origin.iterrows():
@@ -150,20 +148,14 @@ def callback(ch, method, properties, body, *args, **kwargs):
         row_df = pd.DataFrame([row])
         delta = predict_delta(row_df)
         deltas.append(delta)
-    logger.info('smooth')
-    logger.info(deltas)
-    logger.info('target before')
-    logger.info(df_origin['target'])
     df_origin['target'] = deltas
-    logger.info('target after')
-    logger.info(df_origin['target'])
     #df_origin['target'] = df_origin.apply(predict_delta, axis=1)
     #df = predict_delta(df_origin)
     #os.remove(file_name)
     
     
 
-    result_item = {'task_id': '0', 'status': 'success'}
+    result_item = {'task_id': f'{payload['batchid']}', 'status': 'success'}
     #csv_buffer = StringIO()
     #df_origin.to_csv(csv_buffer, index=False)  # index=False, чтобы не сохранять индексы
     #csv_string = csv_buffer.getvalue()

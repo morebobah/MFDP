@@ -32,6 +32,20 @@ class SEvents(BaseModel):
     monitoring_fin: Optional[datetime] = Field(None, description="Дата и время мониторинга")
     commisioning_fin: Optional[datetime] = Field(None, description="Дата и время окончания всех работ")
 
+class SEventsUPD(BaseModel):
+    id: int = Field(..., description="Номер мероприятия")
+    date_start: Optional[datetime] = Field(..., description="Дата и время добавления в систему/начала работ")
+    adr_prepare: Optional[datetime] = Field(..., description="Дата и время определения места размещения")
+    tech_fin: Optional[datetime] = Field(None, description="Дата и время готовности технической части")
+    equipment_fin: Optional[datetime] = Field(None, description="Дата и время заказа оборудования")
+    equipment_prepared: Optional[datetime] = Field(None, description="Дата и время комплектации")
+    contractor_accepted: Optional[datetime] = Field(None, description="Дата и время проектирования")
+    ready_for_work: Optional[datetime] = Field(None, description="Дата и время готовности к пуску")
+    params_fin: Optional[datetime] = Field(None, description="Дата и время готовности параметров")
+    integration_fin: Optional[datetime] = Field(None, description="Дата и время интеграции")
+    monitoring_fin: Optional[datetime] = Field(None, description="Дата и время мониторинга")
+    commisioning_fin: Optional[datetime] = Field(None, description="Дата и время окончания всех работ")
+
 class STarget(BaseModel):
     target: Optional[datetime] = Field(..., description="Целевая даата")
 

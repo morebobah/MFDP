@@ -1,3 +1,4 @@
+import logging
 from fastapi import APIRouter, Request, HTTPException, Response, Depends
 from fastapi.templating import Jinja2Templates
 from database.config import get_settings
@@ -7,6 +8,15 @@ from schemas.packet import SUserGetPack, SPacketName, SPacketAdd
 from services.crud.usercrud import UsersCRUD
 from services.auth.auth import AuthService
 from services.crud.packetscrud import PacketsCRUD
+
+
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+) 
+
+logger = logging.getLogger(__name__) 
+
 
 
 router = APIRouter(tags=['Личный кабинет'])
